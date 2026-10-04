@@ -3,3 +3,4 @@ dist
 public/draco
 *.local
 .DS_Store
+*.tsbuildinfo
