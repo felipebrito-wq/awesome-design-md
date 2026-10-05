@@ -32,7 +32,39 @@ export const STATIONS: Record<string, CameraPose & { fov: number; label: string 
   'int-garage': { pos: [4.0, 1.6, 4.4], target: [10.8, 1.5, -1.5], fov: 62, label: 'Garage' },
 }
 
+/** 2623 S Bryant Cir — framed for its footprint, grand oaks and lot. */
+const FFE = 1.07
+export const BRYANT_PRESETS: Record<string, CameraPose> = {
+  overview: { pos: [16, 25, 46], target: [0, 3, -1] },
+  site: { pos: [4, 54, 32], target: [0, 0, 0] },
+  foundation: { pos: [20, 19, 32], target: [0, 1, 0] },
+  framing: { pos: [26, 15, 32], target: [0, 4, 0] },
+  roughins: { pos: [20, 11, 22], target: [-1, 4, 0] },
+  finishes: { pos: [5, 6.5, 40], target: [0, 4.6, 2] },
+  complete: { pos: [-12, 7.5, -42], target: [0, 4.2, -2] },
+  front: { pos: [4, 4.5, 38], target: [0, 4.8, 2] },
+  rear: { pos: [-12, 7.5, -42], target: [0, 4.2, -2] },
+  aerial: { pos: [0.5, 62, 4], target: [0, 0, 0] },
+  interior: { pos: [-3.5, FFE + 1.6, -3.4], target: [3.3, FFE + 1.5, -0.3] },
+}
+export const BRYANT_STATIONS: typeof STATIONS = {
+  street: { pos: [7.5, 1.75, 30], target: [0, 4, 0], fov: 46, label: 'Street — front' },
+  'front-left': { pos: [-13, 1.8, 16], target: [0, 3.6, 2], fov: 50, label: 'Front left' },
+  'rear-pool': { pos: [-7, 1.8, -17.5], target: [1, 4, -2], fov: 56, label: 'Rear — pool' },
+  aerial: { pos: [22, 32, 32], target: [0, 0, 0], fov: 42, label: 'Drone' },
+  'side-east': { pos: [15, 1.8, -13], target: [4, 3.5, 0], fov: 54, label: 'East side' },
+  'int-great': { pos: [-4, FFE + 1.6, -4], target: [3.4, FFE + 1.5, 1.2], fov: 64, label: 'Great room' },
+  'int-garage': { pos: [5, 1.85, 9.2], target: [12, 1.5, 4.5], fov: 64, label: 'Garage' },
+  'int-bath': { pos: [-9, FFE + 5.6, 4], target: [-11.5, FFE + 4.8, 6.5], fov: 66, label: 'Primary bath' },
+  'elev-front': { pos: [0.5, 5.2, 120], target: [0.5, 5.2, 0], fov: 14, label: 'Front elevation' },
+  'elev-rear': { pos: [0.5, 5.2, -120], target: [0.5, 5.2, 0], fov: 14, label: 'Rear elevation' },
+}
+
+let activeModel = 'demo'
+export const setActiveModel = (m: string | undefined) => (activeModel = m ?? 'demo')
+export const stationsFor = () => (activeModel === 'bryant' ? BRYANT_STATIONS : STATIONS)
+
 export function resolvePose(key: string): (CameraPose & { fov?: number }) | undefined {
-  if (key.startsWith('station:')) return STATIONS[key.slice(8)]
-  return PRESETS[key]
+  if (key.startsWith('station:')) return stationsFor()[key.slice(8)]
+  return (activeModel === 'bryant' ? BRYANT_PRESETS : PRESETS)[key]
 }

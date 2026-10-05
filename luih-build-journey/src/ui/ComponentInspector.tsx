@@ -38,11 +38,11 @@ export function ComponentInspector({ componentId }: { componentId: string }) {
       </button>
       <div className="flex items-center gap-2">
         {system && <span className="h-2 w-2 rounded-full ring-1 ring-black/15" style={{ background: SYSTEM_INDEX[system].color }} />}
-        <span className="eyebrow">
+        <span className="kicker">
           {layer?.label} · {layer?.group}
         </span>
       </div>
-      <h2 className="mt-2 text-[21px] leading-tight font-[450] tracking-[-0.015em]">{comp.name}</h2>
+      <h2 className="mt-2 text-[21px] leading-tight font-semibold tracking-[-0.015em]">{comp.name}</h2>
       <div className="mt-1 text-[12px] text-mute">{comp.location}</div>
 
       <div className="mt-5 flex items-center justify-between">

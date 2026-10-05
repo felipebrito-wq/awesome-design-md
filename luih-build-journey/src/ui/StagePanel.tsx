@@ -8,15 +8,17 @@ import { useJourney } from '@/store/useJourney'
 import { Chip, cx, ProgressBar, StatusIcon } from './primitives'
 import { pct, useDerived } from './useDerived'
 
-type Tab = 'milestones' | 'tasks' | 'inspections' | 'photos' | 'documents' | 'approvals' | 'team' | 'issues' | 'activity'
+type Tab = 'milestones' | 'tasks' | 'inspections' | 'photos' | 'plans' | 'home' | 'documents' | 'approvals' | 'team' | 'issues' | 'activity'
 
-const HOMEOWNER_TABS: Tab[] = ['milestones', 'photos', 'approvals', 'documents']
-const INTERNAL_TABS: Tab[] = ['tasks', 'inspections', 'photos', 'documents', 'team', 'issues', 'activity']
+const HOMEOWNER_TABS: Tab[] = ['milestones', 'photos', 'plans', 'home', 'approvals', 'documents']
+const INTERNAL_TABS: Tab[] = ['tasks', 'inspections', 'photos', 'plans', 'issues', 'team', 'home', 'documents', 'activity']
 const TAB_LABEL: Record<Tab, string> = {
   milestones: 'Milestones',
   tasks: 'Tasks',
   inspections: 'Inspections',
   photos: 'Photos',
+  plans: 'Plans',
+  home: 'Home',
   documents: 'Docs',
   approvals: 'Approvals',
   team: 'Trades',
@@ -43,7 +45,10 @@ function Row({ children, className }: { children: ReactNode; className?: string 
 export function StagePanel({ stage }: { stage: Stage }) {
   const d = useDerived()
   const audience = useJourney((s) => s.audience)
-  const tabs = audience === 'homeowner' ? HOMEOWNER_TABS : INTERNAL_TABS
+  const hasApprovals = d.idx.milestones.some((m) => m.approvals.length)
+  const tabs = (audience === 'homeowner' ? HOMEOWNER_TABS : INTERNAL_TABS).filter(
+    (t) => (t !== 'plans' || !!d.project.drawings?.length) && (t !== 'home' || !!d.project.facts?.length) && (t !== 'approvals' || hasApprovals),
+  )
   const [tabState, setTab] = useState<Tab>(tabs[0])
   const tab = tabs.includes(tabState) ? tabState : tabs[0]
   const p = d.stageProgress.get(stage.id) ?? 0
@@ -56,17 +61,17 @@ export function StagePanel({ stage }: { stage: Stage }) {
     <div className="anim-fade-up" key={stage.id}>
       <div className="px-5 pt-5">
         <div className="flex items-center justify-between pr-7">
-          <span className="eyebrow">
+          <span className="kicker">
             Stage {stage.code} · {status}
           </span>
           <span className="text-[11px] text-mute tabular-nums">
             {fmtDay(range[0])} – {fmtDay(range[1] - 1)}
           </span>
         </div>
-        <h2 className="mt-2 text-[21px] leading-tight font-[450] tracking-[-0.015em]">{stage.name}</h2>
+        <h2 className="mt-2 text-[21px] leading-tight font-semibold tracking-[-0.015em]">{stage.name}</h2>
         {audience === 'homeowner' && <p className="mt-1.5 text-[12.5px] leading-relaxed text-ink-2">{stage.story}</p>}
         <div className="mt-4 flex items-baseline gap-2">
-          <span className="text-[34px] leading-none font-[350] tracking-[-0.03em] tabular-nums">{pct(p)}</span>
+          <span className="text-[34px] leading-none font-semibold tracking-[-0.03em] tabular-nums">{pct(p)}</span>
           <span className="text-[12px] text-mute">complete{d.isLive ? '' : ` · ${fmtDay(d.cursor)}`}</span>
         </div>
         <ProgressBar value={p} className="mt-3" h={4} />
@@ -104,6 +109,8 @@ export function StagePanel({ stage }: { stage: Stage }) {
         {tab === 'inspections' && <Inspections stage={stage} />}
         {tab === 'photos' && <Photos stageId={stage.id} />}
         {tab === 'documents' && <Documents stageId={stage.id} />}
+        {tab === 'plans' && <Plans />}
+        {tab === 'home' && <HomeFacts />}
         {tab === 'approvals' && <Approvals />}
         {tab === 'team' && <Team stage={stage} />}
         {tab === 'issues' && <Issues stage={stage} />}
@@ -251,6 +258,84 @@ export function Photos({ stageId, taskId }: { stageId?: string; taskId?: string 
   )
 }
 
+function Plans() {
+  const d = useDerived()
+  const openCompare = (id: string) => {
+    useJourney.setState({ compareSourceId: id })
+    useJourney.getState().setView('compare')
+  }
+  return (
+    <div className="pt-3">
+      <div className="mb-2 text-[11.5px] text-mute">Sealed construction set · drag the divider to compare design intent with the build.</div>
+      <div className="grid grid-cols-2 gap-2">
+        {(d.project.drawings ?? []).map((dw) => (
+          <button key={dw.id} onClick={() => openCompare(dw.id)} className="group overflow-hidden rounded-lg border border-line bg-white text-left hover:border-accent">
+            <div className="aspect-[3/2] overflow-hidden bg-paper-2">
+              <img src={dw.url} alt={dw.title} className="h-full w-full object-contain p-1 transition-transform duration-500 group-hover:scale-105" loading="lazy" />
+            </div>
+            <div className="px-2 py-1.5">
+              <div className="text-[10px] font-semibold tracking-wide text-accent-dark">{dw.sheet}</div>
+              <div className="truncate text-[11.5px] font-medium">{dw.title}</div>
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function HomeFacts() {
+  const d = useDerived()
+  const audience = useJourney((s) => s.audience)
+  return (
+    <div className="space-y-5 pt-3">
+      <section>
+        <div className="kicker mb-2">The home</div>
+        <dl className="grid grid-cols-2 gap-x-4 gap-y-3">
+          {(d.project.facts ?? []).map(([k, v]) => (
+            <div key={k}>
+              <dt className="eyebrow">{k}</dt>
+              <dd className="mt-0.5 text-[12.5px] font-medium">{v}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+      {audience === 'internal' && d.project.team && (
+        <section>
+          <div className="kicker mb-2">Team</div>
+          {d.project.team.map(([role, name]) => (
+            <Row key={role}>
+              <span className="w-28 shrink-0 text-[11.5px] text-mute">{role}</span>
+              <span className="text-[12.5px] font-medium">{name}</span>
+            </Row>
+          ))}
+        </section>
+      )}
+      <section>
+        <div className="kicker mb-2">Lifecycle</div>
+        {d.project.phases.map((ph) => {
+          const tasks = ph.stages.flatMap((s) => s.milestones.flatMap((m) => m.tasks))
+          if (!tasks.length) return null
+          const done = tasks.filter((t) => t.status === 'complete').length / tasks.length
+          const s = tasks.reduce((a, t) => (t.plannedStart < a ? t.plannedStart : a), '9999')
+          const e = tasks.reduce((a, t) => (t.plannedEnd > a ? t.plannedEnd : a), '')
+          return (
+            <div key={ph.id} className="py-2">
+              <div className="flex justify-between text-[12px]">
+                <span className="font-medium">{ph.name}</span>
+                <span className="text-mute tabular-nums">
+                  {fmtDay(s, { year: true })} – {fmtDay(e, { year: true })}
+                </span>
+              </div>
+              <ProgressBar value={done} tone={done >= 0.999 ? 'ink' : 'accent'} className="mt-1.5" h={3} />
+            </div>
+          )
+        })}
+      </section>
+    </div>
+  )
+}
+
 function Documents({ stageId }: { stageId: string }) {
   const d = useDerived()
   const audience = useJourney((s) => s.audience)
@@ -346,6 +431,25 @@ function Issues({ stage }: { stage: Stage }) {
           <span className={d.variance > 0 ? 'font-medium text-risk' : 'font-medium text-ok'}>{d.variance > 0 ? `+${d.variance} days` : 'on baseline'}</span>
         </div>
       </section>
+      {!!d.project.shiftReasons?.length && (
+        <section>
+          <div className="eyebrow mb-1">Schedule shift reasons · workdays slipped</div>
+          {d.project.shiftReasons.slice(0, 7).map((r) => {
+            const max = d.project.shiftReasons![0].days || 1
+            return (
+              <div key={r.reason} className="py-1.5">
+                <div className="flex justify-between text-[11.5px]">
+                  <span className="truncate pr-3 text-ink-2">{r.reason}</span>
+                  <span className="shrink-0 font-medium tabular-nums">
+                    {r.days}d <span className="text-faint">· {r.count}×</span>
+                  </span>
+                </div>
+                <ProgressBar value={r.days / max} tone="warn" className="mt-1" h={2} />
+              </div>
+            )
+          })}
+        </section>
+      )}
       <section>
         <div className="eyebrow mb-1">Blockers</div>
         {blockers.length === 0 && <Empty>None.</Empty>}

@@ -29,6 +29,8 @@ export type Geo = 'box' | 'cyl' | 'sphere' | 'cone' | 'disc'
  */
 export type Anim = 'rise' | 'sweep' | 'drop' | 'grow' | 'fade' | 'pop'
 
+import type { BufferGeometry } from 'three'
+
 export interface PartSpec {
   id: string
   componentId: string
@@ -41,6 +43,10 @@ export interface PartSpec {
   /** Task that removes it (temporary items, cleared vegetation). */
   disappearTask?: string
   disappearFade?: boolean
+  /** Remap disappear progress into a sub-window of its task. */
+  disappearWindow?: [number, number]
+  /** Custom world-space geometry (roofs). Use a single identity instance. */
+  custom?: BufferGeometry
   /** Remap appear progress into a sub-window of the task. */
   window?: [number, number]
   /** Material color shifts as another task progresses (e.g. paint). */

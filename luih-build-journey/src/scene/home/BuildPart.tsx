@@ -96,7 +96,7 @@ export function BuildPart({ spec }: { spec: PartSpec }) {
   const ref = useRef<THREE.InstancedMesh>(null)
   const ghostRef = useRef<THREE.InstancedMesh>(null)
   const material = useMemo(() => makeMaterial(spec.mat), [spec.mat])
-  const geometry = GEOMETRIES[spec.geo]
+  const geometry = spec.custom ?? GEOMETRIES[spec.geo]
   const n = spec.inst.length
 
   const prep = useMemo(() => {
@@ -117,6 +117,7 @@ export function BuildPart({ spec }: { spec: PartSpec }) {
       appearTask: spec.appearTask,
       disappearTask: spec.disappearTask,
       disappearFade: spec.disappearFade,
+      disappearWindow: spec.disappearWindow,
       window: spec.window,
       colorTo: spec.colorTo,
       glow: spec.glow,

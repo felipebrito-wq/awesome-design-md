@@ -9,7 +9,7 @@ import * as THREE from 'three'
 import { registerCapture, sceneFlags } from '@/lib/capture'
 import { toDay } from '@/lib/dates'
 import { useJourney } from '@/store/useJourney'
-import { STATIONS } from './cameraPresets'
+import { stationsFor } from './cameraPresets'
 
 const frames = (n: number) => new Promise<void>((r) => {
   const step = (k: number) => (k <= 0 ? r() : requestAnimationFrame(() => step(k - 1)))
@@ -56,7 +56,7 @@ export function Capture() {
 
   useEffect(() => {
     registerCapture(async (station, opts = {}) => {
-      const pose = STATIONS[station]
+      const pose = stationsFor()[station]
       if (!pose) throw new Error(`Unknown station ${station}`)
       const st = useJourney.getState()
       const saved = { xray: st.xray, hoveredComponentId: st.hoveredComponentId, selectedComponentId: st.selectedComponentId, previewStageId: st.previewStageId, renderDate: st.renderDate }

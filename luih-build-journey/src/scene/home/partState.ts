@@ -17,6 +17,7 @@ export interface PartMeta {
   appearTask?: string
   disappearTask?: string
   disappearFade?: boolean
+  disappearWindow?: [number, number]
   window?: [number, number]
   colorTo?: { task: string; color: string }
   glow?: { task: string; color: string; intensity: number }
@@ -35,7 +36,7 @@ export interface PartTargets {
   clickable: boolean
 }
 
-const ACCENT = '#4f7cac'
+const ACCENT = '#20a483'
 const compCache = new WeakMap<Project, Map<string, ComponentRecord>>()
 
 export function componentIndex(p: Project) {
@@ -63,13 +64,14 @@ export function resolveTargets(meta: PartMeta, s: State, now: number): PartTarge
   const prog = (taskId?: string) => {
     if (!taskId || taskId === '__always') return 1
     const t = idx.taskById.get(taskId)
-    return t ? taskProgressAt(t, cursor, today) : 1
+    return t ? taskProgressAt(t, cursor, today) : 0
   }
 
   const appearTask = meta.appearTask ?? comp?.taskId
   let p = prog(appearTask)
   if (meta.window) p = clamp01((p - meta.window[0]) / (meta.window[1] - meta.window[0]))
-  const d = meta.disappearTask ? prog(meta.disappearTask) : 0
+  let d = meta.disappearTask ? prog(meta.disappearTask) : 0
+  if (meta.disappearWindow) d = clamp01((d - meta.disappearWindow[0]) / (meta.disappearWindow[1] - meta.disappearWindow[0]))
 
   const layer = comp ? LAYER_INDEX[comp.layer] : undefined
   const group = layer?.group ?? 'SITE'

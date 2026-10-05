@@ -17,13 +17,13 @@ export function Brand() {
   const audience = useJourney((s) => s.audience)
   return (
     <div className="pointer-events-auto">
-      <div className="flex items-center gap-2.5">
-        <span className="text-[13px] font-semibold tracking-[0.34em] text-ink">LUIH</span>
-        <span className="h-3 w-px bg-black/20" />
-        <span className="text-[10.5px] font-medium tracking-[0.22em] text-mute uppercase">Build Journey</span>
+      <div className="flex items-center gap-3">
+        <img src="/brand/luih_logo_dark.png" alt="LUIH" className="h-[22px] w-auto" />
+        <span className="h-4 w-px bg-line" />
+        <span className="text-[10px] font-medium tracking-[0.2em] text-mute uppercase">Build Journey</span>
         {audience === 'internal' && <span className="ml-1 rounded-full bg-ink px-2 py-[2px] text-[9.5px] font-semibold tracking-[0.14em] text-white uppercase">Internal</span>}
       </div>
-      <h1 className="mt-2.5 text-[26px] leading-none font-[450] tracking-[-0.02em] text-ink">{project.name}</h1>
+      <h1 className="mt-3 text-[26px] leading-none font-semibold tracking-[-0.02em] text-ink">{project.name}</h1>
       <div className="mt-1.5 text-[12px] text-mute">
         {project.model} · {project.address}
       </div>

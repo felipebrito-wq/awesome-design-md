@@ -49,6 +49,25 @@ export interface Project {
   qualityChecks: QualityCheck[]
   components: ComponentRecord[]
   settings: { showFinancials: boolean; scheduleStatusOverride?: ScheduleStatus }
+  /** Which home model renders this project ('demo' procedural, 'bryant', or a GLB). */
+  modelKey?: string
+  /** Timeline start (defaults to the first construction task). */
+  timelineStart?: ISODate
+  /** Builder's committed CO date when it differs from the schedule forecast. */
+  expectedCO?: ISODate
+  drawings?: Drawing[]
+  shiftReasons?: { reason: string; count: number; days: number }[]
+  facts?: [string, string][]
+  team?: [string, string][]
+}
+
+export interface Drawing {
+  id: string
+  sheet: string
+  title: string
+  url: string
+  rev?: string
+  station?: string
 }
 
 export interface Phase {

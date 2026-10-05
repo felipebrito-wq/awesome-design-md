@@ -14,6 +14,7 @@ import { ev, type BuildEvent, type Notice } from '@/services/realtime/events'
 import { createRealtimeChannel, type RealtimeChannel } from '@/services/realtime/RealtimeChannel'
 import { simulateSync } from '@/services/realtime/simulator'
 import { capturePhoto } from '@/lib/capture'
+import { setActiveModel } from '@/scene/cameraPresets'
 import { fromDay, type Day } from '@/lib/dates'
 import { indexProject, stageAt, stageFocusDay } from '@/lib/schedule'
 
@@ -43,6 +44,7 @@ interface JourneyState {
   audience: Audience
   view: ViewMode
   compareSplit: number
+  compareSourceId: string | null
   panelOpen: boolean
   gallery: { open: boolean; photoId?: string; stageId?: string }
   demo: { playing: boolean; caption: DemoCaption | null }
@@ -103,6 +105,7 @@ export const useJourney = create<JourneyState>((set, get) => ({
   audience: 'homeowner',
   view: 'model',
   compareSplit: 0.5,
+  compareSourceId: null,
   panelOpen: true,
   gallery: { open: false },
   demo: { playing: false, caption: null },
@@ -120,6 +123,7 @@ export const useJourney = create<JourneyState>((set, get) => ({
     try {
       const project = await service.getProject('luih-wpm-014')
       const idx = indexProject(project)
+      setActiveModel(project.modelKey)
       set({ project, cursor: idx.today })
       channel.subscribe((e) => get().dispatch(e))
     } catch (err) {
@@ -173,9 +177,7 @@ export const useJourney = create<JourneyState>((set, get) => ({
   setAudience: (a) => set({ audience: a }),
   setView(v) {
     set({ view: v })
-    if (v === 'compare') {
-      get().requestCamera('station:street', 1.0)
-    }
+
   },
   setCompareSplit: (x) => set({ compareSplit: Math.max(0.02, Math.min(0.98, x)) }),
   setPanelOpen: (o) => set({ panelOpen: o }),

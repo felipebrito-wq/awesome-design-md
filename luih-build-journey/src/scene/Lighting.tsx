@@ -46,8 +46,8 @@ export function Lighting() {
     if (!s.project) return
     const idx = indexProject(s.project)
     const cursor = s.renderDate ?? s.cursor
-    const handover = idx.taskById.get('t-handover')
-    const lights = idx.taskById.get('t-landscape-lighting')
+    const handover = idx.taskById.get('t-handover') ?? idx.taskById.get('bt-photos')
+    const lights = idx.taskById.get('t-landscape-lighting') ?? idx.taskById.get('bt-trim-lighting-fixtures')
     const target = handover ? taskProgressAt(handover, cursor, idx.today) * 0.9 : 0
     const k = 1 - Math.exp(-3 * Math.min(dt, 0.1))
     dusk.current = dusk.current < 0 ? target : dusk.current + (target - dusk.current) * k

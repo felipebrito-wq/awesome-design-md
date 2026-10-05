@@ -39,11 +39,11 @@ export function PhotoGallery() {
   const trade = d.project.tradePartners.find((t) => t.id === photo?.tradeId)
 
   return (
-    <div className="anim-fade-up pointer-events-auto fixed inset-0 z-50 flex flex-col bg-[#14161a]/95 text-white backdrop-blur-sm">
+    <div className="anim-fade-up pointer-events-auto fixed inset-0 z-50 flex flex-col bg-[#0f172a]/96 text-white backdrop-blur-sm">
       <div className="flex items-center justify-between px-8 pt-6">
         <div>
-          <div className="text-[10.5px] font-medium tracking-[0.2em] text-white/50 uppercase">Site photos · Buildertrend</div>
-          <div className="mt-1 text-[18px] font-[450]">{list.length} photos</div>
+          <div className="kicker">Site photos · Buildertrend</div>
+          <div className="mt-1 text-[18px] font-semibold">{list.length} photos</div>
         </div>
         <div className="flex items-center gap-1">
           <button onClick={() => setStageFilter(undefined)} className={cx('rounded-full px-3 py-1.5 text-[11.5px] font-medium', !stageFilter ? 'bg-white text-ink' : 'text-white/60 hover:text-white')}>
@@ -69,7 +69,7 @@ export function PhotoGallery() {
           </div>
           <div className="w-[260px] shrink-0 self-center">
             <div className="text-[10.5px] font-medium tracking-[0.2em] text-white/45 uppercase">{fmtDay(photo.date, { year: true })}</div>
-            <div className="mt-2 text-[20px] leading-tight font-[450]">{photo.location}</div>
+            <div className="mt-2 text-[20px] leading-tight font-semibold">{photo.location}</div>
             <div className="mt-1 text-[14px] text-white/75">{photo.caption}</div>
             <dl className="mt-6 space-y-3 text-[12px]">
               <Meta k="Stage" v={stage?.name} />

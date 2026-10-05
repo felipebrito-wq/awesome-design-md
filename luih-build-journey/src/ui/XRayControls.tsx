@@ -14,7 +14,7 @@ export function XRayControls() {
   return (
     <div className="surface anim-fade-up pointer-events-auto w-[220px] rounded-2xl p-2">
       <div className="flex items-center justify-between px-2 pt-1 pb-2">
-        <span className="eyebrow">X-Ray · Systems</span>
+        <span className="kicker">X-Ray · Systems</span>
         {isolate && (
           <button className="text-[11px] font-medium text-accent" onClick={() => setIsolate(null)}>
             Show all

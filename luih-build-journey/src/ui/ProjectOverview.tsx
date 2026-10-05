@@ -11,7 +11,7 @@ function Ring({ value, size = 54 }: { value: number; size?: number }) {
   return (
     <svg width={size} height={size} className="-rotate-90">
       <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(27,30,34,0.08)" strokeWidth={3} />
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--color-ink)" strokeWidth={3} strokeDasharray={`${c * value} ${c}`} strokeLinecap="round" style={{ transition: 'stroke-dasharray 500ms ease' }} />
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--color-accent)" strokeWidth={3} strokeDasharray={`${c * value} ${c}`} strokeLinecap="round" style={{ transition: 'stroke-dasharray 500ms ease' }} />
     </svg>
   )
 }
@@ -30,7 +30,7 @@ export function ProjectOverview() {
           <div className="absolute inset-0 flex items-center justify-center text-[13px] font-semibold tabular-nums">{pct(d.overall)}</div>
         </div>
         <div className="min-w-0">
-          <div className="eyebrow">{d.isLive ? 'Current stage' : d.isForecast ? 'Forecast · ' + fmtDay(d.cursor) : 'Viewing · ' + fmtDay(d.cursor)}</div>
+          <div className="kicker">{d.isLive ? 'Current stage' : d.isForecast ? 'Forecast · ' + fmtDay(d.cursor) : 'Viewing · ' + fmtDay(d.cursor)}</div>
           <div className="mt-0.5 truncate text-[15px] font-medium">{d.stage.shortName}</div>
           {!d.isLive ? (
             <button onClick={goLive} className="mt-0.5 text-[11.5px] font-medium text-accent hover:underline">

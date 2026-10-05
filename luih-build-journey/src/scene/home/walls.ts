@@ -214,12 +214,13 @@ export function framing(walls: Wall[], spacing = 0.6, gOffset = 0): Inst[] {
 /** CMU coursing: 0.2 m courses, rising course by course (g = course). */
 export function masonry(walls: Wall[]): Inst[] {
   const out: Inst[] = []
-  const courses = Math.round((CMU_TOP - SLAB) / 0.2)
+  const maxCourses = Math.max(...walls.map((w) => Math.round(w.h / 0.2)))
   const shades = ['#a9a7a1', '#a3a19b', '#adaba5', '#a6a49e']
-  for (let k = 0; k < courses; k++) {
+  for (let k = 0; k < maxCourses; k++) {
     const v0 = k * 0.2
     const v1 = v0 + 0.188
     walls.forEach((w, wi) => {
+      if (v1 > w.h + 0.01) return
       for (const [u0, u1] of freeSpans(w, v0, v1)) {
         out.push(wallBox(w, u0, u1, v0, v1, -w.t, 0, { g: k, c: shades[(k + wi) % shades.length] }))
       }

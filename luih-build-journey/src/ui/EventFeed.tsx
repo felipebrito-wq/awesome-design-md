@@ -66,8 +66,8 @@ export function Celebration() {
         <span className="ring-out absolute top-1/2 left-1/2 h-40 w-40 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/80" />
         <span className="ring-out absolute top-1/2 left-1/2 h-40 w-40 -translate-x-1/2 -translate-y-1/2 rounded-full border border-accent/60" style={{ animationDelay: '220ms' }} />
         <div className="caption-in rounded-2xl bg-white/90 px-6 py-4 text-center shadow-xl backdrop-blur">
-          <div className="eyebrow">{big ? 'Stage complete' : 'Milestone reached'}</div>
-          <div className={cx('mt-1 font-[450] tracking-[-0.015em]', big ? 'text-[24px]' : 'text-[17px]')}>{c.title.replace('Milestone complete: ', '')}</div>
+          <div className="kicker justify-center">{big ? 'Stage complete' : 'Milestone reached'}</div>
+          <div className={cx('mt-1 font-semibold tracking-[-0.015em]', big ? 'text-[24px]' : 'text-[17px]')}>{c.title.replace('Milestone complete: ', '')}</div>
         </div>
       </div>
     </div>

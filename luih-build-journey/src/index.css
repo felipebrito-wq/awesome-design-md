@@ -1,25 +1,34 @@
 @import 'tailwindcss';
-@import '@fontsource-variable/inter';
+@import '@fontsource/poppins/300.css';
+@import '@fontsource/poppins/400.css';
+@import '@fontsource/poppins/500.css';
+@import '@fontsource/poppins/600.css';
+@import '@fontsource/jetbrains-mono/400.css';
 
+/* LUIH design system — green on slate (brand: #20A483, Poppins). */
 @theme {
-  --font-sans: 'Inter Variable', -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
-  --color-ink: #1b1e22;
-  --color-ink-2: #3d4248;
-  --color-mute: #7b8087;
-  --color-faint: #a9adb2;
-  --color-line: rgba(27, 30, 34, 0.09);
-  --color-paper: #fbfaf7;
-  --color-paper-2: #f4f1ec;
-  --color-accent: #3f6d9e;
-  --color-accent-soft: #e7eef6;
-  --color-ok: #4f8a63;
-  --color-warn: #b7832f;
-  --color-risk: #b4553f;
+  --font-sans: 'Poppins', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', Consolas, monospace;
+  --color-ink: #0f172a;
+  --color-ink-2: #334155;
+  --color-body: #475569;
+  --color-mute: #64748b;
+  --color-faint: #94a3b8;
+  --color-line: #e2e8f0;
+  --color-paper: #ffffff;
+  --color-paper-2: #f8fafc;
+  --color-slate-100: #f1f5f9;
+  --color-accent: #20a483;
+  --color-accent-dark: #15806b;
+  --color-accent-soft: rgba(32, 164, 131, 0.09);
+  --color-ok: #20a483;
+  --color-warn: #f59e0b;
+  --color-risk: #dc2626;
 }
 
 :root {
   color-scheme: light;
-  --shadow-float: 0 1px 2px rgba(20, 22, 26, 0.04), 0 8px 28px rgba(20, 22, 26, 0.08);
+  --shadow-float: 0 3px 18px rgba(30, 41, 59, 0.12);
 }
 
 html,
@@ -28,26 +37,54 @@ body,
   height: 100%;
   margin: 0;
   overflow: hidden;
-  background: #e9ece9;
+  background: #f8fafc;
   color: var(--color-ink);
   font-family: var(--font-sans);
-  font-feature-settings: 'cv11', 'ss01', 'tnum';
+  font-feature-settings: 'tnum';
   -webkit-font-smoothing: antialiased;
 }
 
 .surface {
-  background: rgba(251, 250, 247, 0.94);
+  background: rgba(255, 255, 255, 0.96);
   border: 1px solid var(--color-line);
   box-shadow: var(--shadow-float);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(8px);
 }
 
 .eyebrow {
-  font-size: 10.5px;
-  letter-spacing: 0.14em;
+  font-size: 10px;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--color-mute);
   font-weight: 500;
+}
+/* LUIH motif: green dot + uppercase kicker in green-dark */
+.kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-accent-dark);
+  font-weight: 600;
+}
+.kicker::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: var(--color-accent);
+}
+.circle-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 9999px;
+  font-size: 10px;
+  font-weight: 600;
 }
 
 .scroll-thin {
@@ -71,10 +108,10 @@ body,
 
 @keyframes pulse-dot {
   0% {
-    box-shadow: 0 0 0 0 rgba(63, 109, 158, 0.45);
+    box-shadow: 0 0 0 0 rgba(32, 164, 131, 0.45);
   }
   100% {
-    box-shadow: 0 0 0 10px rgba(63, 109, 158, 0);
+    box-shadow: 0 0 0 10px rgba(32, 164, 131, 0);
   }
 }
 .pulse-dot {

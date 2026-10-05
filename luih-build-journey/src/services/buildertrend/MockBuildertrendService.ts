@@ -1,19 +1,46 @@
 import { demoProject } from '@/data/demoProject'
 import type { Project } from '@/domain/types'
+import { BRYANT_COMPONENTS } from '@/scene/home/bryant/bryantSpec'
 import type { BuildertrendService } from './BuildertrendService'
 
 const clone = <T,>(x: T): T => structuredClone(x)
 const latency = (ms = 120) => new Promise((r) => setTimeout(r, ms))
 
-/** Returns demo data shaped as normalized domain objects. */
+/** Component maps for the procedural models (a GLB carries its own). */
+const MODEL_COMPONENTS: Record<string, Project['components']> = { bryant: BRYANT_COMPONENTS }
+/** Model defaults: start the time machine before demolition of the existing home. */
+const MODEL_DEFAULTS: Record<string, Partial<Project>> = { bryant: { timelineStart: '2025-07-20' } }
+
+/**
+ * Local stand-in for the sync backend. Loads a real, imported Buildertrend
+ * job from /private/project.json when present (git-ignored, produced by
+ * scripts/import-buildertrend.mjs); otherwise the bundled demo project.
+ */
 export class MockBuildertrendService implements BuildertrendService {
   private project: Project = clone(demoProject)
+  private loaded: Promise<void>
+
+  constructor() {
+    this.loaded = fetch('/private/project.json')
+      .then(async (r) => {
+        if (!r.ok || !(r.headers.get('content-type') ?? '').includes('json')) return
+        const p = (await r.json()) as Project
+        if (!p.components?.length && p.modelKey && MODEL_COMPONENTS[p.modelKey]) p.components = clone(MODEL_COMPONENTS[p.modelKey])
+        Object.assign(p, { ...MODEL_DEFAULTS[p.modelKey ?? ''], ...p })
+        // Jobsite-camera photo feed (placeholder captures until Buildertrend photos are wired)
+        const feed = await fetch(`/private/${p.modelKey}/photos/index.json`).then((x) => (x.ok && (x.headers.get('content-type') ?? '').includes('json') ? x.json() : [])).catch(() => [])
+        p.photos = [...(p.photos ?? []), ...(feed as Project['photos'])]
+        this.project = p
+      })
+      .catch(() => undefined)
+  }
 
   async getProject() {
-    await latency()
+    await Promise.all([this.loaded, latency()])
     return clone(this.project)
   }
   async getSchedule() {
+    await this.loaded
     return clone(this.project.phases.find((p) => p.key === 'construction')?.stages ?? [])
   }
   async getTasks() {

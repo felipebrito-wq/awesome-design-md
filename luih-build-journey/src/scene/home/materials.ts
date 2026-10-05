@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { SYSTEM_INDEX } from '@/domain/layers'
+import { seamTexture } from './roofs'
 
 interface MatDef {
   color: string
@@ -9,6 +10,9 @@ interface MatDef {
   emissive?: string
   emissiveIntensity?: number
   side?: THREE.Side
+  /** World-space lap-siding reveal lines (7"). */
+  lap?: boolean
+  map?: 'seam'
 }
 
 /** Architectural palette — warm, desaturated, Central-Florida modern. */
@@ -63,6 +67,26 @@ export const MATERIALS: Record<string, MatDef> = {
   fenceScreen: { color: '#343a38', roughness: 0.95 },
   steel: { color: '#3a3e42', roughness: 0.5, metalness: 0.6 },
   stake: { color: '#d9c2a0', roughness: 0.8 },
+  // — Real-home finishes (2623 S Bryant Cir spec book) —
+  siding: { color: '#f1f0eb', roughness: 0.7, lap: true },
+  sidingPrimed: { color: '#dedcd5', roughness: 0.8, lap: true },
+  stuccoRaw: { color: '#cfcac1', roughness: 0.95 },
+  roofMetal: { color: '#ffffff', roughness: 0.4, metalness: 0.55, map: 'seam', side: THREE.DoubleSide },
+  underlay: { color: '#3d4146', roughness: 0.95, side: THREE.DoubleSide },
+  roofDeck: { color: '#c79f69', roughness: 0.9, side: THREE.DoubleSide },
+  soffit: { color: '#f3f3f0', roughness: 0.8 },
+  lvp: { color: '#8b6b4f', roughness: 0.55 },
+  ashCabinet: { color: '#cbc2b4', roughness: 0.6 },
+  quartz: { color: '#f2f0eb', roughness: 0.2 },
+  poolDeck: { color: '#e3dac8', roughness: 0.85 },
+  poolWater: { color: '#2a86b8', roughness: 0.05, metalness: 0.15, opacity: 0.85 },
+  paverGray: { color: '#a3a39d', roughness: 0.9 },
+  screen: { color: '#1b1e21', roughness: 0.6, opacity: 0.32, side: THREE.DoubleSide },
+  trimWhite: { color: '#f7f7f4', roughness: 0.6 },
+  oldHouse: { color: '#d8cfbf', roughness: 0.95 },
+  oldRoof: { color: '#6d6158', roughness: 0.95 },
+  barricade: { color: '#e8772e', roughness: 0.7 },
+  grassLot: { color: '#7c9150', roughness: 1 },
 }
 
 export function makeMaterial(key: string): THREE.MeshStandardMaterial {
@@ -80,11 +104,31 @@ export function makeMaterial(key: string): THREE.MeshStandardMaterial {
   })
   m.userData.baseOpacity = d.opacity ?? 1
   m.userData.baseColor = d.color
+  if (d.map === 'seam') m.map = (SEAM ??= seamTexture())
+  if (d.lap) patchLapSiding(m)
   return m
 }
 
+let SEAM: THREE.Texture | undefined
+
+/** Darkens a thin reveal every 7" in world Y — lap siding without UVs. */
+function patchLapSiding(m: THREE.MeshStandardMaterial) {
+  m.onBeforeCompile = (shader) => {
+    shader.vertexShader = shader.vertexShader
+      .replace('#include <common>', '#include <common>\nvarying vec3 vLapWorld;')
+      .replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\nvLapWorld = (modelMatrix * instanceMatrix * vec4(transformed, 1.0)).xyz;')
+    shader.fragmentShader = shader.fragmentShader
+      .replace('#include <common>', '#include <common>\nvarying vec3 vLapWorld;')
+      .replace(
+        '#include <color_fragment>',
+        '#include <color_fragment>\nfloat lapF = fract(vLapWorld.y / 0.178);\ndiffuseColor.rgb *= mix(0.78, 1.0, smoothstep(0.0, 0.07, lapF));',
+      )
+  }
+  m.customProgramCacheKey = () => 'lap-siding'
+}
+
 export const GHOST_MATERIAL = new THREE.MeshBasicMaterial({
-  color: '#4f7cac',
+  color: '#20a483',
   transparent: true,
   opacity: 0.16,
   depthWrite: false,

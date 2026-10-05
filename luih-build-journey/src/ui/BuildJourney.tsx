@@ -94,10 +94,10 @@ export function BuildJourney() {
       <HoverLabel />
 
       {/* Intro veil */}
-      <div className={cx('pointer-events-none fixed inset-0 z-[60] flex items-center justify-center bg-paper transition-opacity duration-[1100ms]', intro ? 'opacity-100' : 'opacity-0')}>
+      <div className={cx('pointer-events-none fixed inset-0 z-[60] flex items-center justify-center bg-paper-2 transition-opacity duration-[1100ms]', intro ? 'opacity-100' : 'opacity-0')}>
         <div className="text-center">
-          <div className="text-[15px] font-semibold tracking-[0.42em] text-ink">LUIH</div>
-          <div className="mt-2 text-[10.5px] tracking-[0.3em] text-mute uppercase">Build Journey</div>
+          <img src="/brand/luih_logo_dark.png" alt="LUIH" className="mx-auto h-8 w-auto" />
+          <div className="mt-3 text-[10px] tracking-[0.3em] text-mute uppercase">Build Journey</div>
         </div>
       </div>
     </div>

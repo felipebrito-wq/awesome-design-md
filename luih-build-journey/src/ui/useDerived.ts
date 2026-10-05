@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import type { Stage } from '@/domain/types'
 import {
-  forecastCompletion,
+  completionDate,
   indexProject,
   nextMilestone,
   overallProgress,
@@ -24,7 +24,7 @@ export function useDerived() {
       today: idx.today,
       todayProgress: overallProgress(project, idx.today),
       todayStage: stageAt(project, idx.today),
-      forecast: forecastCompletion(project),
+      forecast: completionDate(project),
       status: scheduleStatus(project),
       variance: scheduleVarianceDays(project),
       next: nextMilestone(project),

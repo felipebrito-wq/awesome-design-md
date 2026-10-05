@@ -56,7 +56,10 @@ export const taskDuration = (t: Task) => Math.max(1, toDay(t.plannedEnd) - toDay
 // ---- Indexing -------------------------------------------------------------
 
 export interface ProjectIndex {
+  /** Construction stages (the 3D timeline). */
   stages: Stage[]
+  /** Every stage in every lifecycle phase. */
+  allStages: Stage[]
   milestones: Milestone[]
   tasks: Task[]
   taskById: Map<string, Task>
@@ -85,6 +88,7 @@ export function indexProject(p: Project): ProjectIndex {
 export function buildIndex(p: Project): ProjectIndex {
   const construction = p.phases.find((ph) => ph.key === 'construction')
   const stages = construction ? [...construction.stages].sort((a, b) => a.order - b.order) : []
+  const allStages = [...p.phases].sort((a, b) => a.order - b.order).flatMap((ph) => [...ph.stages].sort((a, b) => a.order - b.order))
   const milestones: Milestone[] = []
   const tasks: Task[] = []
   const taskById = new Map<string, Task>()
@@ -94,8 +98,9 @@ export function buildIndex(p: Project): ProjectIndex {
   const milestoneOfTask = new Map<string, Milestone>()
   const stageRange = new Map<string, [Day, Day]>()
   const today = toDay(p.today)
-  let end = toDay(p.baselineCompletion)
-  for (const st of stages) {
+  let end = -Infinity
+  const constructionIds = new Set(stages.map((s) => s.id))
+  for (const st of allStages) {
     stageById.set(st.id, st)
     let s = Infinity
     let e = -Infinity
@@ -110,13 +115,15 @@ export function buildIndex(p: Project): ProjectIndex {
         const [ws, we] = taskWindow(t, today)
         s = Math.min(s, ws)
         e = Math.max(e, we + 1)
-        end = Math.max(end, we + 1)
+        if (constructionIds.has(st.id)) end = Math.max(end, we + 1)
       }
     }
     stageRange.set(st.id, [s, e])
   }
+  if (!isFinite(end)) end = toDay(p.baselineCompletion)
   const idx: ProjectIndex = {
     stages,
+    allStages,
     milestones,
     tasks,
     taskById,
@@ -125,7 +132,7 @@ export function buildIndex(p: Project): ProjectIndex {
     stageOfTask,
     milestoneOfTask,
     stageRange,
-    start: toDay(p.startDate),
+    start: p.timelineStart ? toDay(p.timelineStart) : stages.length ? Math.min(...stages.map((s) => stageRange.get(s.id)![0])) : toDay(p.startDate),
     end,
     today,
   }
@@ -151,7 +158,7 @@ export function stageProgress(s: Stage, cursor: Day, today: Day) {
   return weightedProgress(stageTasks(s), cursor, today)
 }
 
-/** Stage weights for the overall % (finishes dominate real effort/cost). */
+/** Optional stage weights for the overall %; default = task-duration weighted. */
 const STAGE_WEIGHT: Record<string, number> = {
   'stg-site': 4,
   'stg-foundation': 10,
@@ -163,10 +170,12 @@ const STAGE_WEIGHT: Record<string, number> = {
 
 export function overallProgress(p: Project, cursor: Day): number {
   const idx = indexProject(p)
+  const weighted = idx.stages.every((s) => STAGE_WEIGHT[s.id] !== undefined)
+  if (!weighted) return weightedProgress(idx.stages.flatMap(stageTasks), cursor, idx.today)
   let w = 0
   let acc = 0
   for (const s of idx.stages) {
-    const sw = STAGE_WEIGHT[s.id] ?? 10
+    const sw = STAGE_WEIGHT[s.id]
     w += sw
     acc += sw * stageProgress(s, cursor, idx.today)
   }
@@ -202,8 +211,13 @@ export function forecastCompletion(p: Project): Day {
   return indexProject(p).end - 1
 }
 
+/** Date to show as "estimated completion": builder's CO date if provided. */
+export function completionDate(p: Project): Day {
+  return p.expectedCO ? toDay(p.expectedCO) : forecastCompletion(p)
+}
+
 export function scheduleVarianceDays(p: Project): number {
-  return forecastCompletion(p) - toDay(p.baselineCompletion)
+  return completionDate(p) - toDay(p.baselineCompletion)
 }
 
 export function scheduleStatus(p: Project): ScheduleStatus {
@@ -217,7 +231,10 @@ export function scheduleStatus(p: Project): ScheduleStatus {
 
 export function nextMilestone(p: Project): Milestone | undefined {
   const idx = indexProject(p)
-  return idx.milestones.find((m) => m.tasks.some((t) => t.status !== 'complete'))
+  const constr = new Set(idx.stages.map((s) => s.id))
+  return idx.milestones
+    .filter((m) => constr.has(m.stageId) && m.tasks.some((t) => t.status !== 'complete'))
+    .sort((a, b) => (a.plannedDate < b.plannedDate ? -1 : 1))[0]
 }
 
 export function milestoneProgress(m: Milestone, cursor: Day, today: Day) {
@@ -227,7 +244,8 @@ export function milestoneProgress(m: Milestone, cursor: Day, today: Day) {
 /** Snap points for the timeline: milestone completion dates. */
 export function milestoneSnapDays(p: Project): { day: Day; milestone: Milestone }[] {
   const idx = indexProject(p)
-  return idx.milestones.map((m) => {
+  const constr = new Set(idx.stages.map((s) => s.id))
+  return idx.milestones.filter((m) => constr.has(m.stageId)).map((m) => {
     let e = -Infinity
     for (const t of m.tasks) e = Math.max(e, taskWindow(t, idx.today)[1] + 1)
     return { day: e, milestone: m }
