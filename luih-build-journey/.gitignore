@@ -1,0 +1,10 @@
+node_modules
+dist
+public/draco
+*.local
+.DS_Store
+*.tsbuildinfo
+
+# Real LUIH project data (never commit — repo is public)
+private/
+public/private/
