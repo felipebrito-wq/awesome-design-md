@@ -12,8 +12,7 @@ import { CompareView, PhotoView } from './PhotoView'
 import { PhotoGallery } from './PhotoGallery'
 import { ProjectOverview } from './ProjectOverview'
 import { cx } from './primitives'
-import { StageSelector } from './StageSelector'
-import { Brand, SyncStatus, Toolbar } from './TopBar'
+import { Brand, Toolbar } from './TopBar'
 import { XRayControls } from './XRayControls'
 
 const ConstructionScene = lazy(() => import('@/scene/ConstructionScene').then((m) => ({ default: m.ConstructionScene })))
@@ -59,30 +58,19 @@ export function BuildJourney() {
           </div>
         </div>
         {/* Top-right: tools */}
-        <div className={cx('absolute top-5 flex flex-col items-end gap-2 transition-all duration-500 max-md:top-auto max-md:right-3 max-md:bottom-[164px] max-md:left-3 max-md:items-center', panelVisible ? 'right-[412px] max-md:opacity-0' : 'right-6', playing && 'pointer-events-none opacity-0')}>
+        <div className={cx('absolute top-5 flex flex-col items-end gap-2 transition-all duration-500 max-md:top-auto max-md:right-3 max-md:bottom-[176px] max-md:left-3 max-md:items-center', panelVisible ? 'right-[412px] max-md:opacity-0' : 'right-6', playing && 'pointer-events-none opacity-0')}>
           <Toolbar />
         </div>
         <ExplorerPanel />
         {!panelVisible && !playing && view === 'model' && (
-          <button onClick={() => setPanelOpen(true)} className="surface pointer-events-auto absolute top-1/2 right-0 flex max-md:top-[44%] -translate-y-1/2 items-center gap-1.5 rounded-l-xl px-2.5 py-3 text-[11px] font-medium text-ink-2 [writing-mode:vertical-rl]">
-            <PanelRight size={13} className="rotate-90" /> Details
+          <button onClick={() => setPanelOpen(true)} className="surface pointer-events-auto absolute top-1/2 right-0 flex -translate-y-1/2 items-center gap-1.5 rounded-l-xl border-r-0 px-2.5 py-3 text-xs font-medium text-slate-700 [writing-mode:vertical-rl] hover:text-ink max-md:top-[44%]">
+            <PanelRight size={14} className="rotate-90" /> Details
           </button>
         )}
 
-        {/* Bottom dock */}
-        <div className={cx('surface pointer-events-auto absolute bottom-4 left-4 rounded-2xl px-5 pt-3 pb-2.5 transition-all duration-500 max-md:right-2 max-md:bottom-[max(8px,env(safe-area-inset-bottom))] max-md:left-2 max-md:px-3', panelVisible ? 'right-[412px]' : 'right-4')}>
-          <div className="flex items-center justify-between pb-2">
-            <StageSelector onPlay={togglePlay} />
-          </div>
-          <div className="flex items-center gap-4 border-t border-black/[0.05] pt-1.5">
-            <div className="min-w-0 flex-1">
-              <ConstructionTimeline />
-            </div>
-          </div>
-          <div className="mt-0.5 flex justify-between">
-            <SyncStatus />
-            <span className="text-[10.5px] text-faint max-md:hidden">Drag to travel through time · ←/→ milestones</span>
-          </div>
+        {/* Bottom dock: the time machine */}
+        <div className={cx('surface pointer-events-auto absolute bottom-4 left-4 rounded-xl px-4 pt-3 pb-2 transition-all duration-500 max-md:right-2 max-md:bottom-[max(8px,env(safe-area-inset-bottom))] max-md:left-2 max-md:px-3', panelVisible ? 'right-[412px]' : 'right-4')}>
+          <ConstructionTimeline onPlay={togglePlay} />
         </div>
 
         <DemoOverlay />
@@ -94,10 +82,10 @@ export function BuildJourney() {
       <HoverLabel />
 
       {/* Intro veil */}
-      <div className={cx('pointer-events-none fixed inset-0 z-[60] flex items-center justify-center bg-paper-2 transition-opacity duration-[1100ms]', intro ? 'opacity-100' : 'opacity-0')}>
+      <div className={cx('pointer-events-none fixed inset-0 z-[60] flex items-center justify-center bg-paper transition-opacity duration-[1100ms]', intro ? 'opacity-100' : 'opacity-0')}>
         <div className="text-center">
           <img src="brand/luih_logo_dark.png" alt="LUIH" className="mx-auto h-8 w-auto" />
-          <div className="mt-3 text-[10px] tracking-[0.3em] text-mute uppercase">Build Journey</div>
+          <div className="mt-3 text-xs font-medium text-slate-700">Build Journey</div>
         </div>
       </div>
     </div>

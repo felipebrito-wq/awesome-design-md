@@ -5,30 +5,75 @@
 @import '@fontsource/poppins/600.css';
 @import '@fontsource/jetbrains-mono/400.css';
 
-/* LUIH design system — green on slate (brand: #20A483, Poppins). */
+/*
+ * LUIH OS design system — tokens mirror Invisto/pm-luih-os
+ * (tailwind.config.js + documents/prd/context/DESIGN_SYSTEM.md).
+ * Ink-on-paper, slate secondary, accent green as a signal only.
+ * Legacy aliases (ink-2, mute, faint, line, ok, risk) point at DS tokens so
+ * older components inherit the system instead of forking it.
+ */
 @theme {
   --font-sans: 'Poppins', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', Consolas, monospace;
-  --color-ink: #0f172a;
-  --color-ink-2: #334155;
-  --color-body: #475569;
-  --color-mute: #64748b;
-  --color-faint: #94a3b8;
-  --color-line: #e2e8f0;
-  --color-paper: #ffffff;
-  --color-paper-2: #f8fafc;
-  --color-slate-100: #f1f5f9;
+
+  /* DS type scale (xs is 11px in LUIH OS, not Tailwind's 12px) */
+  --text-xs: 0.6875rem;
+  --text-xs--line-height: 1rem;
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.25rem;
+  --text-base: 1rem;
+  --text-base--line-height: 1.5rem;
+  --text-lg: 1.125rem;
+  --text-lg--line-height: 1.5rem;
+  --text-xl: 1.25rem;
+  --text-xl--line-height: 1.75rem;
+  --text-2xl: 1.5rem;
+  --text-2xl--line-height: 2rem;
+  --text-3xl: 1.875rem;
+  --text-3xl--line-height: 2.25rem;
+  /* DS helper-text size: "whisper, not shout" */
+  --text-caption: 0.75rem;
+  --text-caption--line-height: 1.125rem;
+
+  /* DS tokens */
+  --color-ink: #1a222b;
+  --color-paper: #fafaf8;
   --color-accent: #20a483;
-  --color-accent-dark: #15806b;
-  --color-accent-soft: rgba(32, 164, 131, 0.09);
+  --color-accent-dark: #177a62; /* accent darkened for text: 5.2:1 on white */
+  --color-accent-soft: #bce0d7;
+  --color-slate-700: #536476;
+  --color-slate-500: #879dac;
+  --color-slate-300: #b7c8d5;
+  --color-slate-50: #f3f6f8;
+  --color-warning: #f59e0b;
+  --color-warning-soft: #fef3c7;
+  --color-error: #ef4444;
+  --color-error-soft: #fee2e2;
+  --color-info: #3b82f6;
+  --color-info-soft: #dbeafe;
+  /* Badge label shades: DS hue, darkened to clear 4.5:1 on the soft fill */
+  --color-warning-ink: #b45309;
+  --color-error-ink: #b91c1c;
+  --color-info-ink: #1d4ed8;
+
+  /* Legacy aliases → DS tokens */
+  --color-ink-2: #536476;
+  --color-body: #536476;
+  --color-mute: #536476;
+  --color-faint: #879dac;
+  --color-line: #e2e8f0;
+  --color-paper-2: #f3f6f8;
   --color-ok: #20a483;
   --color-warn: #f59e0b;
-  --color-risk: #dc2626;
+  --color-risk: #ef4444;
+
+  --radius-card: 12px;
 }
 
 :root {
   color-scheme: light;
-  --shadow-float: 0 3px 18px rgba(30, 41, 59, 0.12);
+  /* Offset + soft blur: chrome floats over the 3D scene without a halo. */
+  --shadow-float: 0 1px 2px rgba(26, 34, 43, 0.06), 0 8px 24px -6px rgba(26, 34, 43, 0.14);
 }
 
 html,
@@ -37,65 +82,89 @@ body,
   height: 100%;
   margin: 0;
   overflow: hidden;
-  background: #f8fafc;
+  background: var(--color-paper);
   color: var(--color-ink);
   font-family: var(--font-sans);
-  font-feature-settings: 'tnum';
   -webkit-font-smoothing: antialiased;
+  caret-color: var(--color-accent);
 }
 
+::selection {
+  background: var(--color-accent-soft);
+  color: var(--color-ink);
+}
+
+/* DS: focus rings are always visible — ring-2 accent, offset 2. */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* DS card: white, slate-200 hairline, rounded-xl. Floating, so it carries a soft offset shadow. */
 .surface {
-  background: rgba(255, 255, 255, 0.96);
+  background: #ffffff;
   border: 1px solid var(--color-line);
   box-shadow: var(--shadow-float);
-  backdrop-filter: blur(8px);
 }
 
-.eyebrow {
-  font-size: 10px;
-  letter-spacing: 0.12em;
+/* DS text-label: field + micro labels. Uses slate-700 (not slate-400) to clear WCAG AA. */
+.label {
+  font-size: var(--text-xs);
+  line-height: var(--text-xs--line-height);
+  font-weight: 600;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--color-mute);
-  font-weight: 500;
+  color: var(--color-slate-700);
 }
-/* LUIH motif: green dot + uppercase kicker in green-dark */
+.eyebrow {
+  font-size: var(--text-xs);
+  line-height: var(--text-xs--line-height);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-slate-700);
+}
+/* Section label inside panels (was a green-dot kicker; DS reserves accent for signal). */
 .kicker {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  font-size: 10px;
-  letter-spacing: 0.14em;
+  gap: 6px;
+  font-size: var(--text-xs);
+  line-height: var(--text-xs--line-height);
+  font-weight: 600;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--color-accent-dark);
-  font-weight: 600;
+  color: var(--color-slate-700);
 }
-.kicker::before {
-  content: '';
-  width: 6px;
-  height: 6px;
-  border-radius: 9999px;
-  background: var(--color-accent);
-}
-.circle-num {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 9999px;
-  font-size: 10px;
-  font-weight: 600;
+
+/* DS mono: IDs, codes, percentages, amounts. Never prose. */
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
 }
 
 .scroll-thin {
   scrollbar-width: thin;
-  scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
+  scrollbar-color: var(--color-slate-300) transparent;
+}
+.scroll-thin::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.scroll-thin::-webkit-scrollbar-thumb {
+  background-color: var(--color-slate-300);
+  border-radius: 9999px;
+}
+.scroll-thin::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 @keyframes fade-up {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(4px);
   }
   to {
     opacity: 1;
@@ -103,7 +172,7 @@ body,
   }
 }
 .anim-fade-up {
-  animation: fade-up 420ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation: fade-up 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @keyframes pulse-dot {
@@ -140,7 +209,7 @@ body,
   }
 }
 .ring-out {
-  animation: ring-out 1600ms cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+  animation: ring-out 1600ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes caption-in {
@@ -156,7 +225,7 @@ body,
   }
 }
 .caption-in {
-  animation: caption-in 700ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation: caption-in 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 input[type='range'].luih-range {
@@ -173,4 +242,14 @@ input[type='range'].luih-range::-webkit-slider-thumb {
   background: #fff;
   border: 1px solid rgba(0, 0, 0, 0.2);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
 }
