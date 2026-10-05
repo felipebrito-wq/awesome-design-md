@@ -1,9 +1,11 @@
 /** Static Winter Park neighborhood context: lawn, street, neighbors, oaks, lake. */
+import { useFrame } from '@react-three/fiber'
 import { memo, useLayoutEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { POOL } from './home/houseSpec'
 import { POOL as BRYANT_POOL, X as BX, Z as BZ } from './home/bryant/plan'
 import { useJourney } from '@/store/useJourney'
+import { applyFocusFade, FOCUS_NEAR } from './focusFade'
 
 function noiseTexture(base: string, amp = 18, size = 256) {
   const c = document.createElement('canvas')
@@ -25,7 +27,7 @@ function noiseTexture(base: string, amp = 18, size = 256) {
   return t
 }
 
-function Instanced({ items, geo, color, roughness = 1, cast = true }: { items: { p: number[]; s: number[]; r?: number; c?: string }[]; geo: THREE.BufferGeometry; color: string; roughness?: number; cast?: boolean }) {
+function Instanced({ items, geo, color, roughness = 1, cast = true, fade = false }: { items: { p: number[]; s: number[]; r?: number; c?: string }[]; geo: THREE.BufferGeometry; color: string; roughness?: number; cast?: boolean; fade?: boolean }) {
   const ref = useRef<THREE.InstancedMesh>(null)
   useLayoutEffect(() => {
     const m = new THREE.Matrix4()
@@ -43,7 +45,7 @@ function Instanced({ items, geo, color, roughness = 1, cast = true }: { items: {
   }, [items])
   return (
     <instancedMesh ref={ref} args={[geo, undefined, items.length]} castShadow={cast} receiveShadow raycast={() => undefined}>
-      <meshStandardMaterial color={items.some((i) => i.c) ? '#ffffff' : color} roughness={roughness} />
+      <meshStandardMaterial ref={(m) => void (m && fade && !m.userData.focus && (m.userData.focus = applyFocusFade(m)))} color={items.some((i) => i.c) ? '#ffffff' : color} roughness={roughness} />
     </instancedMesh>
   )
 }
@@ -62,6 +64,10 @@ export function Site() {
 
 /** Winter Park lakefront (demo) or Sunset Park, Tampa (2623 S Bryant Cir). */
 const SiteImpl = memo(function SiteImpl({ variant, context }: { variant: 'lake' | 'tampa'; context: boolean }) {
+  // Anything closer to the camera than the house (minus its radius) dissolves
+  useFrame(({ camera }) => {
+    FOCUS_NEAR.value = Math.max(0, camera.position.length() - (variant === 'tampa' ? 17 : 14))
+  })
   const ground = useMemo(() => {
     const tampa = variant === 'tampa'
     const s = new THREE.Shape()
@@ -92,7 +98,7 @@ const SiteImpl = memo(function SiteImpl({ variant, context }: { variant: 'lake' 
     const tampa = variant === 'tampa'
     // Tampa: retained grand oaks from the A-1 site plan (32" front-left, 26" right, 20" rear-right, 36" off-site)
     const oakSpots: [number, number, number][] = tampa
-      ? [[BX(-6), BZ(-16), 1.35], [BX(98), BZ(52), 1.2], [BX(96), BZ(100), 1.0], [BX(104), BZ(-8), 1.4], [-34, 30, 1.2], [36, 33, 1.1], [-10, 36, 1.0], [-40, -10, 1.3], [40, -32, 1.2], [-26, -38, 1.1], [12, -42, 1.2], [-48, 18, 1.1]]
+      ? [[BX(-6), BZ(-16), 1.25], [BX(98), BZ(52), 1.1], [BX(96), BZ(100), 1.0], [BX(104), BZ(-8), 1.25], [-52, -36, 1.2], [56, -40, 1.1]]
       : [[-22, 24, 1.2], [-6, 31, 1.0], [14, 31, 1.15], [30, 23, 1.1], [-34, 8, 1.3], [33, -6, 1.25], [-30, -20, 1.2], [24, -30, 1.1], [-19, -30, 1.0], [40, 30, 1], [-44, 30, 1.1], [-14, 46, 1.2]]
     const oaks: { p: number[]; s: number[] }[] = []
     const canopies: { p: number[]; s: number[]; c: string }[] = []
@@ -101,19 +107,23 @@ const SiteImpl = memo(function SiteImpl({ variant, context }: { variant: 'lake' 
       oaks.push({ p: [x, 2.2 * k, z], s: [0.9 * k, 4.4 * k, 0.9 * k] })
       for (let i = 0; i < 7; i++) {
         const a = rnd() * Math.PI * 2
-        const r = rnd() * 4.2 * k
-        canopies.push({ p: [x + Math.cos(a) * r, (5.2 + rnd() * 2.2) * k, z + Math.sin(a) * r], s: [(6 + rnd() * 3) * k, (3.2 + rnd() * 1.4) * k, (6 + rnd() * 3) * k], c: greens[i % 4] })
+        const r = rnd() * (tampa ? 3.4 : 4.2) * k
+        // Tampa: lifted, tighter crowns so the retained oaks frame the house instead of hiding it
+        const lift = tampa ? 1.25 : 1
+        const sz = tampa ? 0.82 : 1
+        canopies.push({ p: [x + Math.cos(a) * r, (5.2 + rnd() * 2.2) * k * lift, z + Math.sin(a) * r], s: [(6 + rnd() * 3) * k * sz, (3.2 + rnd() * 1.4) * k * sz, (6 + rnd() * 3) * k * sz], c: greens[i % 4] })
       }
     }
     const farTrees: { p: number[]; s: number[]; c: string }[] = []
-    for (let i = 0; i < 140; i++) {
+    for (let i = 0; i < (tampa ? 80 : 140); i++) {
       const a = rnd() * Math.PI * 2
       const r = 70 + rnd() * 110
       const x = Math.cos(a) * r
       const z = Math.sin(a) * r
       if (!tampa && z < -36 && z > -150 && Math.abs(x) < 120) continue // keep lake open
+      if (tampa && Math.abs(x) < 34) continue // keep the front/rear elevation sightlines clear
       const s = 9 + rnd() * 9
-      farTrees.push({ p: [x, s * 0.55, z], s: [s, s * 0.8, s], c: greens[i % 4] })
+      farTrees.push({ p: [x, s * 0.55, z], s: [s, s * 0.8, s], c: tampa ? ['#8d9c84', '#94a28a', '#899880', '#9aa68f'][i % 4] : greens[i % 4] })
     }
     const houses: { p: number[]; s: number[]; c?: string }[] = []
     const roofs: { p: number[]; s: number[]; r?: number }[] = []
@@ -122,16 +132,16 @@ const SiteImpl = memo(function SiteImpl({ variant, context }: { variant: 'lake' 
       ? [[-33, 0, 15, 13, false], [34, 0, 16, 14, false], [-34, 44, 15, 11, false], [-4, 46, 17, 11, false], [27, 46, 15, 12, true], [-60, 4, 16, 12, false], [62, 2, 15, 12, true], [-30, -40, 16, 13, false], [2, -40, 17, 12, true], [32, -40, 15, 12, false]]
       : [[-36, -2, 16, 12, true], [36, -1, 15, 13, false], [-34, 46, 15, 11, false], [-4, 48, 17, 11, true], [26, 47, 15, 12, false], [-62, 6, 16, 12, false], [62, 4, 15, 12, true]]
     for (const [x, z, w, d, flat] of lots) {
-      houses.push({ p: [x, 2.2, z], s: [w, 4.4, d], c: '#ece8e1' })
+      houses.push({ p: [x, 2.2, z], s: [w, 4.4, d], c: tampa ? '#f2f1ee' : '#ece8e1' })
       if (flat) {
-        houses.push({ p: [x - w * 0.15, 5.8, z], s: [w * 0.6, 2.8, d * 0.9], c: '#e6e2da' })
-        houses.push({ p: [x, 4.5, z], s: [w + 0.8, 0.25, d + 0.8], c: '#2a2d30' })
-        houses.push({ p: [x - w * 0.15, 7.3, z], s: [w * 0.6 + 0.8, 0.25, d * 0.9 + 0.8], c: '#2a2d30' })
+        houses.push({ p: [x - w * 0.15, 5.8, z], s: [w * 0.6, 2.8, d * 0.9], c: tampa ? '#eeede9' : '#e6e2da' })
+        houses.push({ p: [x, 4.5, z], s: [w + 0.8, 0.25, d + 0.8], c: tampa ? '#c8ccce' : '#2a2d30' })
+        houses.push({ p: [x - w * 0.15, 7.3, z], s: [w * 0.6 + 0.8, 0.25, d * 0.9 + 0.8], c: tampa ? '#c8ccce' : '#2a2d30' })
       } else {
         roofs.push({ p: [x, 4.4 + 1.4, z], s: [w * 1.05, 2.8, d * 1.05], r: Math.PI / 4 })
       }
       const front = z > 20 ? -1 : 1
-      for (let i = 0; i < 3; i++) windows.push({ p: [x - w / 3 + (i * w) / 3, 2.0, z + (front * d) / 2 + front * 0.02], s: [w / 5, 1.8, 0.05] })
+      if (!tampa) for (let i = 0; i < 3; i++) windows.push({ p: [x - w / 3 + (i * w) / 3, 2.0, z + (front * d) / 2 + front * 0.02], s: [w / 5, 1.8, 0.05] })
     }
     return { oaks, canopies, houses, roofs, windows, farTrees }
   }, [variant])
@@ -139,7 +149,7 @@ const SiteImpl = memo(function SiteImpl({ variant, context }: { variant: 'lake' 
   return (
     <group>
       <mesh geometry={ground} receiveShadow position={[0, -0.002, 0]} raycast={() => undefined}>
-        <meshStandardMaterial map={grassTex} color="#ffffff" roughness={1} />
+        <meshStandardMaterial map={grassTex} color={variant === 'tampa' ? '#d9ddd0' : '#ffffff'} roughness={1} />
       </mesh>
       {/* Lake + bank + dock (Winter Park demo only) */}
       {variant === 'lake' && (
@@ -178,11 +188,11 @@ const SiteImpl = memo(function SiteImpl({ variant, context }: { variant: 'lake' 
         <meshStandardMaterial color="#d2cdc3" roughness={0.9} />
       </mesh>
       <group visible={context}>
-      <Instanced items={oaks} geo={CYL} color="#5d4f42" />
-      <Instanced items={canopies} geo={SPHERE} color="#46603a" />
+      <Instanced items={oaks} geo={CYL} color="#5d4f42" fade />
+      <Instanced items={canopies} geo={SPHERE} color="#46603a" fade />
       <Instanced items={farTrees} geo={SPHERE} color="#46603a" cast={false} />
-      <Instanced items={houses} geo={BOX} color="#ece8e1" roughness={0.9} />
-      <Instanced items={roofs} geo={ROOF} color="#3b3e42" roughness={0.7} />
+      <Instanced items={houses} geo={BOX} color="#ece8e1" roughness={0.9} fade />
+      <Instanced items={roofs} geo={ROOF} color={variant === 'tampa' ? '#c8ccce' : '#3b3e42'} roughness={0.8} fade />
       <Instanced items={windows} geo={BOX} color="#2a3540" roughness={0.2} cast={false} />
       </group>
     </group>

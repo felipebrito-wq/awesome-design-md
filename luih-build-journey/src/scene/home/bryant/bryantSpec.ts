@@ -3,6 +3,7 @@
  * schedule (task ids = slug of the BT schedule item, see
  * scripts/import-buildertrend.mjs). Same PartSpec contract as the demo house.
  */
+import * as THREE from 'three'
 import type { ComponentRecord } from '@/domain/types'
 import { box, polyline, rectMinus, seg, tile, euler } from '../geom'
 import type { Inst, PartSpec, V3 } from '../partTypes'
@@ -399,13 +400,14 @@ const gable = gableRoofGeometry(X(23), X(35), Z(10.5), Z(22), F2_TOP, 1.0, 0.4)
   ALL_HIPS.forEach((r, ri) => {
     const o = r.overhang
     const ye = r.y - o * r.pitch
-    const edges: [V3, V3][] = [
-      [[r.x0 - o, ye, r.z1 + o], [r.x1 + o, ye, r.z1 + o]],
-      [[r.x0 - o, ye, r.z0 - o], [r.x1 + o, ye, r.z0 - o]],
-      [[r.x0 - o, ye, r.z0 - o], [r.x0 - o, ye, r.z1 + o]],
-      [[r.x1 + o, ye, r.z0 - o], [r.x1 + o, ye, r.z1 + o]],
+    // Each eave edge with its inward direction (toward the wall line) for the soffit strip
+    const edges: [V3, V3, [number, number]][] = [
+      [[r.x0 - o, ye, r.z1 + o], [r.x1 + o, ye, r.z1 + o], [0, -1]],
+      [[r.x0 - o, ye, r.z0 - o], [r.x1 + o, ye, r.z0 - o], [0, 1]],
+      [[r.x0 - o, ye, r.z0 - o], [r.x0 - o, ye, r.z1 + o], [1, 0]],
+      [[r.x1 + o, ye, r.z0 - o], [r.x1 + o, ye, r.z1 + o], [-1, 0]],
     ]
-    for (const [a, b] of edges) {
+    for (const [a, b, inw] of edges) {
       const steps = 24
       for (let k = 0; k < steps; k++) {
         const t0 = k / steps
@@ -415,9 +417,10 @@ const gable = gableRoofGeometry(X(23), X(35), Z(10.5), Z(22), F2_TOP, 1.0, 0.4)
         const mid = [(pa[0] + pb[0]) / 2, (pa[2] + pb[2]) / 2]
         if (ri < MAIN.length && covered(mid[0], mid[1], r)) continue
         fas.push(box(Math.min(pa[0], pb[0]) - 0.03, ye - 0.22, Math.min(pa[2], pb[2]) - 0.03, Math.max(pa[0], pb[0]) + 0.03, ye + 0.02, Math.max(pa[2], pb[2]) + 0.03, { g: ri }))
+        const qa = [pa[0] + inw[0] * o, pa[2] + inw[1] * o]
+        sof.push(box(Math.min(pa[0], pb[0], qa[0]), ye - 0.2, Math.min(pa[2], pb[2], qa[1]), Math.max(pa[0], pb[0], qa[0]), ye - 0.18, Math.max(pa[2], pb[2], qa[1]), { g: ri }))
       }
     }
-    for (const sr of rectMinus([r.x0 - o, r.z0 - o, r.x1 + o, r.z1 + o], [[r.x0, r.z0, r.x1, r.z1]])) sof.push(box(sr[0], ye - 0.2, sr[1], sr[2], ye - 0.18, sr[3], { g: ri }))
   })
   add({ id: 'fascia', componentId: 'c-soffit', geo: 'box', mat: 'fascia', inst: fas, anim: 'sweep', castShadow: false })
   add({ id: 'soffit', componentId: 'c-soffit', geo: 'box', mat: 'soffit', inst: sof, anim: 'pop', castShadow: false })
@@ -433,6 +436,15 @@ const gable = gableRoofGeometry(X(23), X(35), Z(10.5), Z(22), F2_TOP, 1.0, 0.4)
     if (sides.includes('r')) out.push(box(X(r.x1) - 0.03, yb - 0.04, Z(r.d1), X(r.x1) + 0.03, yb, Z(r.d0)))
     if (sides.includes('b')) out.push(box(X(r.x0), yb - 0.04, Z(r.d1) - 0.03, X(r.x1), yb, Z(r.d1) + 0.03))
     for (let x = r.x0; x <= r.x1 + 0.01; x += 3) if (sides.includes('f')) out.push(box(X(x) - 0.03, y, Z(r.d0) - 0.03, X(x) + 0.03, yb, Z(r.d0) + 0.03))
+    // Chippendale X panels (A-5 front balcony)
+    if (sides.includes('f') && sides.includes('x'))
+      for (let x = r.x0; x + 3 <= r.x1 + 0.01; x += 3) {
+        const z = Z(r.d0)
+        const a = X(x) + 0.05
+        const b = X(x + 3) - 0.05
+        out.push(seg([a, y + 0.08, z], [b, yb - 0.08, z], 0.018), seg([b, y + 0.08, z], [a, yb - 0.08, z], 0.018))
+        out.push(box(a, y + 0.06, z - 0.02, b, y + 0.1, z + 0.02))
+      }
     for (let x = r.x0; x <= r.x1 + 0.01; x += 3) if (sides.includes('b')) out.push(box(X(x) - 0.03, y, Z(r.d1) - 0.03, X(x) + 0.03, yb, Z(r.d1) + 0.03))
     return out
   }
@@ -440,7 +452,7 @@ const gable = gableRoofGeometry(X(23), X(35), Z(10.5), Z(22), F2_TOP, 1.0, 0.4)
   const REAR_BAL: R = { x0: 37, d0: 52, x1: 45, d1: 64 }
   add({ id: 'balcony-slabs', componentId: 'c-floor-trusses', geo: 'box', mat: 'concrete', anim: 'drop', dropH: 1, inst: [rect(FRONT_BAL, F2_FLOOR - 0.3, F2_FLOOR, { g: 0 }), ...[24.3, 33.7].map((x) => box(X(x) - 0.18, FFE, Z(10.7) - 0.18, X(x) + 0.18, F2_FLOOR - 0.3, Z(10.7) + 0.18, { g: 1 }))] })
   add({ id: 'safety-rails', componentId: 'c-safety-rail', geo: 'box', mat: 'white', inst: [...rails(F2_FLOOR, FRONT_BAL, 'flr'), ...rails(F2_FLOOR, REAR_BAL, 'blr')].map((x) => ({ ...x, c: '#d4a017' })), anim: 'pop', disappearTask: T('Exterior Railings & Awnings'), castShadow: false })
-  add({ id: 'railings', componentId: 'c-railings', geo: 'box', mat: 'frame', inst: [...rails(F2_FLOOR, FRONT_BAL, 'flr'), ...rails(F2_FLOOR, REAR_BAL, 'blr')], anim: 'pop', castShadow: false })
+  add({ id: 'railings', componentId: 'c-railings', geo: 'box', mat: 'frame', inst: [...rails(F2_FLOOR, FRONT_BAL, 'flrx'), ...rails(F2_FLOOR, REAR_BAL, 'blr')], anim: 'pop', castShadow: false })
   // Lanai screen enclosure
   const scr: Inst[] = []
   for (const [a, b] of [[[37, 64], [59, 64]], [[37, 50], [37, 64]]] as [Pt, Pt][]) {
@@ -449,6 +461,7 @@ const gable = gableRoofGeometry(X(23), X(35), Z(10.5), Z(22), F2_TOP, 1.0, 0.4)
   add({ id: 'lanai-screen', componentId: 'c-railings', geo: 'box', mat: 'screen', inst: scr, anim: 'fade', castShadow: false })
 }
 
+const skinH = (w: Wall) => w.h + (w.floor === 2 ? F2_TOP - F2_BLOCK_TOP : w.y0 === GAR_SLAB ? GAR_TOP - GAR_BLOCK_TOP : F2_FLOOR - F1_BLOCK_TOP)
 // ===========================================================================
 // ENVELOPE — windows, doors, stucco, siding
 // ===========================================================================
@@ -457,23 +470,41 @@ const gable = gableRoofGeometry(X(23), X(35), Z(10.5), Z(22), F2_TOP, 1.0, 0.4)
   const glass: Inst[] = []
   const entry: Inst[] = []
   const garage: Inst[] = []
+  const garagePanels: Inst[] = []
+  const casing: Inst[] = []
+  const shutters: Inst[] = []
+  const sidingWalls = new Set(SIDING.map((w) => w.id))
   let g = 0
   for (const w of [...WALLS_1, ...WALLS_2, ...WALLS_G]) {
     const base = -0.1
+    const front = w.n[1] > 0.5
+    const ext = w.skin === 'ext'
     for (const op of w.openings) {
       const f = 0.06
       const d0 = base - 0.05
       const d1 = base + 0.05
       if (op.kind === 'garage') {
-        for (let i = 0; i < 8; i++) {
-          const v0 = op.v0 + ((op.v1 - op.v0) * i) / 8
-          garage.push(wallBox(w, op.u0, op.u1, v0, v0 + (op.v1 - op.v0) / 8 - 0.015, base - 0.02, base + 0.03, { g: i }))
-        }
+        // Carriage-style overhead door (A-5): recessed backer, 4 rows of raised panels, top row of lites
+        garage.push(wallBox(w, op.u0, op.u1, op.v0, op.v1, base - 0.04, base, { g: 0 }))
+        const cols = Math.max(2, Math.round((op.u1 - op.u0) / 1.25))
+        const rows = 4
+        const gap = 0.07
+        const cw = (op.u1 - op.u0 - gap * (cols + 1)) / cols
+        const rh = (op.v1 - op.v0 - gap * (rows + 1)) / rows
+        for (let r = 0; r < rows; r++)
+          for (let c = 0; c < cols; c++) {
+            const u0 = op.u0 + gap + c * (cw + gap)
+            const v0 = op.v0 + gap + r * (rh + gap)
+            if (r === rows - 1) glass.push(wallBox(w, u0, u0 + cw, v0, v0 + rh, base - 0.005, base + 0.005, { g: 98 }))
+            else garagePanels.push(wallBox(w, u0, u0 + cw, v0, v0 + rh, base, base + 0.025, { g: r }))
+          }
+        if (ext) casing.push(...trimAround(w, op.u0, op.u1, op.v0, op.v1, 0.14, false))
         continue
       }
       if (op.kind === 'entry') {
         entry.push(wallBox(w, op.u0, op.u1, op.v0, op.v1, base - 0.03, base + 0.03, { g: 0, c: '#1b1d20' }))
         glass.push(wallBox(w, op.u0 + 0.12, op.u1 - 0.12, op.v0 + 0.1, op.v1 - 0.12, base + 0.03, base + 0.05, { g: 99 }))
+        if (ext) casing.push(...trimAround(w, op.u0, op.u1, op.v0, op.v1, 0.16, false))
         continue
       }
       frames.push(wallBox(w, op.u0, op.u1, op.v0, op.v0 + f, d0, d1, { g }))
@@ -481,22 +512,83 @@ const gable = gableRoofGeometry(X(23), X(35), Z(10.5), Z(22), F2_TOP, 1.0, 0.4)
       frames.push(wallBox(w, op.u0, op.u0 + f, op.v0, op.v1, d0, d1, { g }))
       frames.push(wallBox(w, op.u1 - f, op.u1, op.v0, op.v1, d0, d1, { g }))
       const width = op.u1 - op.u0
+      const height = op.v1 - op.v0
       const panes = Math.max(1, Math.round(width / (op.kind === 'slider' ? 1.2 : 0.95)))
       for (let i = 1; i < panes; i++) {
         const u = op.u0 + (width * i) / panes
         frames.push(wallBox(w, u - 0.025, u + 0.025, op.v0, op.v1, d0, d1, { g }))
       }
-      if (op.kind === 'window' && op.v1 - op.v0 > 1.6) frames.push(wallBox(w, op.u0, op.u1, op.v1 - 0.45, op.v1 - 0.4, d0, d1, { g }))
+      if (op.kind === 'window' && height > 1.6) frames.push(wallBox(w, op.u0, op.u1, op.v1 - 0.45, op.v1 - 0.4, d0, d1, { g }))
+      // Colonial grille in each pane (thin muntins sitting on the glass)
+      if (op.kind === 'window' && width > 1.0) {
+        const pw = width / panes
+        for (let i = 0; i < panes; i++) {
+          const u = op.u0 + pw * (i + 0.5)
+          frames.push(wallBox(w, u - 0.012, u + 0.012, op.v0 + f, op.v1 - f, base + 0.01, base + 0.025, { g }))
+        }
+        for (const t of [0.36, 0.68]) frames.push(wallBox(w, op.u0 + f, op.u1 - f, op.v0 + height * t - 0.012, op.v0 + height * t + 0.012, base + 0.01, base + 0.025, { g }))
+      }
       glass.push(wallBox(w, op.u0 + f, op.u1 - f, op.v0 + f, op.v1 - f, base - 0.01, base + 0.01, { g }))
+      if (ext) casing.push(...trimAround(w, op.u0, op.u1, op.v0, op.v1, 0.11, op.kind === 'window'))
+      // Top-hinged Bahama shutters on the street elevation (A-5)
+      if (front && op.kind === 'window' && width > 1.2) shutters.push(...bahama(w, op.u0 - 0.05, op.u1 + 0.05, op.v1 + 0.05, Math.min(1.3, height * 0.62), g))
       g++
     }
+  }
+  function trimAround(w: Wall, u0: number, u1: number, v0: number, v1: number, b: number, sill: boolean): Inst[] {
+    const out = sidingWalls.has(w.id) ? 0.045 : 0.035
+    const o0 = out
+    const o1 = out + 0.028
+    const res = [
+      wallBox(w, u0 - b, u1 + b, v1, v1 + b, o0, o1, { g: 0 }),
+      wallBox(w, u0 - b, u0, v0, v1, o0, o1, { g: 0 }),
+      wallBox(w, u1, u1 + b, v0, v1, o0, o1, { g: 0 }),
+    ]
+    if (sill) res.push(wallBox(w, u0 - b - 0.04, u1 + b + 0.04, v0 - 0.07, v0, o0, o1 + 0.05, { g: 0 }))
+    else if (v0 > 0.05) res.push(wallBox(w, u0 - b, u1 + b, v0 - b, v0, o0, o1, { g: 0 }))
+    return res
+  }
+  function bahama(w: Wall, u0: number, u1: number, vTop: number, h: number, gg: number): Inst[] {
+    const tilt = 0.32
+    const yaw = Math.atan2(w.n[0], w.n[1])
+    const q = euler(-tilt, yaw, 0)
+    const um = (u0 + u1) / 2
+    const out0 = 0.09
+    const res: Inst[] = []
+    // Frame stiles/rails + louvers, all in the tilted shutter plane
+    const at = (dv: number, dz: number): V3 => {
+      const [x, y, z] = wallPoint(w, um, vTop - Math.cos(tilt) * dv, out0 + Math.sin(tilt) * dv + dz)
+      return [x, y, z]
+    }
+    const W = u1 - u0
+    res.push({ p: at(0.03, 0), s: [W, 0.06, 0.035], q, g: gg })
+    res.push({ p: at(h - 0.03, 0), s: [W, 0.06, 0.035], q, g: gg })
+    for (const du of [-W / 2 + 0.03, W / 2 - 0.03, 0]) {
+      const p = at(h / 2, 0)
+      const L = wallLen(w)
+      const dx = (w.b[0] - w.a[0]) / L
+      const dz = (w.b[1] - w.a[1]) / L
+      res.push({ p: [p[0] + dx * du, p[1], p[2] + dz * du], s: [0.06, h, 0.035], q, g: gg })
+    }
+    const n = Math.max(6, Math.round(h / 0.085))
+    const ql = euler(-tilt - 0.55, yaw, 0)
+    for (let i = 1; i < n; i++) res.push({ p: at((h * i) / n, 0), s: [W - 0.06, 0.012, 0.07], q: ql, g: gg })
+    return res
+  }
+  // Hardie corner boards on the sided elevations
+  for (const w of SIDING) {
+    const h = skinH(w)
+    const L = wallLen(w)
+    casing.push(wallBox(w, -0.06, 0.1, 0, h, 0.045, 0.075, { g: 1 }), wallBox(w, L - 0.1, L + 0.06, 0, h, 0.045, 0.075, { g: 1 }))
   }
   add({ id: 'window-frames', componentId: 'c-windows', geo: 'box', mat: 'frame', inst: frames, anim: 'drop', dropH: 0.5 })
   add({ id: 'glazing', componentId: 'c-windows', geo: 'box', mat: 'glass', inst: glass, anim: 'fade', window: [0.1, 1], castShadow: false })
   add({ id: 'entry-door', componentId: 'c-entry-door', geo: 'box', mat: 'white', inst: entry, anim: 'pop', window: [0.5, 1] })
   add({ id: 'garage-doors', componentId: 'c-garage-doors', geo: 'box', mat: 'frame', inst: garage, anim: 'rise' })
+  add({ id: 'garage-panels', componentId: 'c-garage-doors', geo: 'box', mat: 'frame', inst: garagePanels, anim: 'rise' })
+  add({ id: 'casing', componentId: 'c-siding', geo: 'box', mat: 'trimWhite', inst: casing, anim: 'pop', window: [0.35, 1], castShadow: false })
+  add({ id: 'shutters', componentId: 'c-railings', geo: 'box', mat: 'frame', inst: shutters, anim: 'drop', dropH: 0.4 })
 }
-const skinH = (w: Wall) => w.h + (w.floor === 2 ? F2_TOP - F2_BLOCK_TOP : w.y0 === GAR_SLAB ? GAR_TOP - GAR_BLOCK_TOP : F2_FLOOR - F1_BLOCK_TOP)
 add({ id: 'lath', componentId: 'c-lath', geo: 'box', mat: 'wrap', anim: 'pop', castShadow: false, inst: [...skin(STUCCO, 0.004, 0.014, { h: skinH }), ...skin(STEM, 0.004, 0.014).map((x) => ({ ...x, g: (x.g ?? 0) + 40 }))] })
 add({ id: 'stucco', componentId: 'c-stucco', geo: 'box', mat: 'stuccoRaw', anim: 'rise', colorTo: { task: T('Paint: Exterior'), color: '#f4f3ee' }, inst: [...skin(STUCCO, 0.014, 0.035, { h: skinH }), ...skin(STEM, 0.014, 0.035).map((x) => ({ ...x, g: (x.g ?? 0) + 40 }))] })
 add({ id: 'siding', componentId: 'c-siding', geo: 'box', mat: 'sidingPrimed', anim: 'rise', colorTo: { task: T('Paint: Exterior'), color: '#f6f5f0' }, inst: skin(SIDING, 0.02, 0.045, { h: skinH }) })
@@ -583,7 +675,7 @@ const YA = F2_TOP + 0.3
 // ===========================================================================
 // INTERIOR
 // ===========================================================================
-add({ id: 'insulation', componentId: 'c-insulation', geo: 'box', mat: 'insulation', anim: 'pop', castShadow: false, inst: [...skin(EXT.filter((w) => w.y0 !== GAR_SLAB), -0.225, -0.2), ...MAIN.map((r, i) => box(r.x0, F2_TOP + 0.05, r.z0, r.x1, F2_TOP + 0.2, r.z1, { g: 50 + i }))] })
+add({ id: 'insulation', componentId: 'c-insulation', geo: 'box', mat: 'insulation', anim: 'pop', castShadow: false, inst: [...skin(EXT.filter((w) => w.y0 !== GAR_SLAB), -0.225, -0.2), ...MAIN.map((r, i) => box(r.x0 + 0.6, F2_TOP + 0.03, r.z0 + 0.6, r.x1 - 0.6, F2_TOP + 0.18, r.z1 - 0.6, { g: 50 + i })) /* inset so batts stay under the roof planes */] })
 {
   const dw: Inst[] = []
   ;[...WALLS_1, ...WALLS_2].forEach((w, i) => skin([w], -0.24, -0.225).forEach((x) => dw.push({ ...x, g: i })))
@@ -695,23 +787,47 @@ add({ id: 'apron', componentId: 'c-apron', geo: 'box', mat: 'concrete', anim: 's
   spots.forEach(([x, d, h], i) => {
     const a: V3 = [X(x), 0, Z(d)]
     palms.push({ ...seg([X(x), 0, Z(d)], [X(x) + 0.15, h, Z(d) + 0.1], 0.17), g: i, a })
-    for (let k = 0; k < 16; k++) {
-      const ang = (k / 16) * Math.PI * 2 + i * 0.7
-      const L = 2.9 + (k % 2) * 0.4
-      const tilt = k % 4 === 0 ? 0.25 : -0.28 - (k % 3) * 0.16
-      fronds.push({ p: [X(x) + 0.15 + Math.cos(ang) * L * 0.45, h + Math.sin(tilt) * L * 0.45 + 0.15, Z(d) + 0.1 + Math.sin(ang) * L * 0.45], s: [L, 0.04, 0.62], q: euler(0, -ang, tilt), g: i, a })
+    for (let k = 0; k < 18; k++) {
+      const ang = (k / 18) * Math.PI * 2 + i * 0.7
+      const L = 2.6 + (k % 3) * 0.35
+      const pitch = k % 3 === 0 ? 0.35 : k % 3 === 1 ? 0.05 : -0.3
+      fronds.push({ p: [X(x) + 0.15, h + 0.1, Z(d) + 0.1], s: [L, L, L], q: euler(0, -ang, pitch), g: i, a })
     }
   })
   const hedges: Inst[] = [rect({ x0: 0.4, d0: 4, x1: 18.5, d1: 6.5 }, 0, 0.9, { g: 0 }), rect({ x0: 34, d0: 1.5, x1: 50, d1: 4 }, 0, 0.9, { g: 1 }), rect({ x0: 75.5, d0: 24, x1: 76.5, d1: 66 }, 0, 1.6, { g: 2 })]
   add({ id: 'sod', componentId: 'c-landscape', geo: 'box', mat: 'sod', inst: sod, anim: 'sweep', castShadow: false })
   add({ id: 'palm-trunks', componentId: 'c-landscape', geo: 'cyl', mat: 'palmTrunk', inst: palms, anim: 'grow' })
-  add({ id: 'palm-fronds', componentId: 'c-landscape', geo: 'box', mat: 'palmFrond', inst: fronds, anim: 'grow' })
+  add({ id: 'palm-fronds', componentId: 'c-landscape', geo: 'box', custom: frondGeometry(), mat: 'palmFrond', inst: fronds, anim: 'grow' })
   add({ id: 'hedges', componentId: 'c-landscape', geo: 'box', mat: 'hedge', inst: hedges, anim: 'rise' })
   const fence: Inst[] = []
   for (const [a, b] of [[[LOT.x0, 30], [LOT.x0, LOT.d1]], [[LOT.x0, LOT.d1], [LOT.x1, LOT.d1]], [[LOT.x1, LOT.d1], [LOT.x1, 30]]] as [Pt, Pt][]) {
     fence.push(box(Math.min(X(a[0]), X(b[0])) - 0.03, 0, Math.min(Z(a[1]), Z(b[1])) - 0.03, Math.max(X(a[0]), X(b[0])) + 0.03, 1.8, Math.max(Z(a[1]), Z(b[1])) + 0.03))
   }
   add({ id: 'fence', componentId: 'c-fence', geo: 'box', mat: 'trimWhite', inst: fence, anim: 'sweep' })
+}
+
+/** Arched, tapered, V-folded palm frond along +X (unit length, origin at the crown). */
+function frondGeometry(): THREE.BufferGeometry {
+  const N = 14
+  const pos: number[] = []
+  const idx: number[] = []
+  for (let i = 0; i <= N; i++) {
+    const t = i / N
+    const y = 0.22 * t - 0.5 * t * t
+    const hw = 0.17 * Math.pow(Math.sin(Math.PI * Math.min(1, t * 1.08)), 0.75) + 0.004
+    const fold = 0.05 * hw / 0.17
+    pos.push(t, y - fold, -hw, t, y + 0.01, 0, t, y - fold, hw)
+  }
+  for (let i = 0; i < N; i++) {
+    const a = i * 3
+    const b = a + 3
+    idx.push(a, b, a + 1, a + 1, b, b + 1, a + 1, b + 1, a + 2, a + 2, b + 1, b + 2)
+  }
+  const g = new THREE.BufferGeometry()
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3))
+  g.setIndex(idx)
+  g.computeVertexNormals()
+  return g
 }
 
 export const BRYANT_PARTS: PartSpec[] = parts

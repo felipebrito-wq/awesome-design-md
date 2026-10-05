@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { applyFocusFade } from '../focusFade'
 import { SYSTEM_INDEX } from '@/domain/layers'
 import { seamTexture } from './roofs'
 
@@ -40,7 +41,7 @@ export const MATERIALS: Record<string, MatDef> = {
   fascia: { color: '#1f2226', roughness: 0.45, metalness: 0.35 },
   membrane: { color: '#d9d7d1', roughness: 0.85 },
   frame: { color: '#1b1d20', roughness: 0.4, metalness: 0.4 },
-  glass: { color: '#2d3d48', roughness: 0.04, metalness: 0.6, opacity: 0.42 },
+  glass: { color: '#1e2a33', roughness: 0.03, metalness: 0.75, opacity: 0.78 },
   wood: { color: '#a8774d', roughness: 0.62 },
   garageDoor: { color: '#6b4c35', roughness: 0.6 },
   insulation: { color: '#ead9a6', roughness: 1 },
@@ -62,7 +63,7 @@ export const MATERIALS: Record<string, MatDef> = {
   leafWild: { color: '#6b7744', roughness: 1 },
   leafPine: { color: '#4b5d3a', roughness: 1 },
   palmTrunk: { color: '#8f7f69', roughness: 0.95 },
-  palmFrond: { color: '#5e7d3e', roughness: 0.9, side: THREE.DoubleSide },
+  palmFrond: { color: '#56763a', roughness: 0.8, side: THREE.DoubleSide },
   mulch: { color: '#4a3a2c', roughness: 1 },
   fenceScreen: { color: '#343a38', roughness: 0.95 },
   steel: { color: '#3a3e42', roughness: 0.5, metalness: 0.6 },
@@ -74,7 +75,7 @@ export const MATERIALS: Record<string, MatDef> = {
   roofMetal: { color: '#ffffff', roughness: 0.4, metalness: 0.55, map: 'seam', side: THREE.DoubleSide },
   underlay: { color: '#3d4146', roughness: 0.95, side: THREE.DoubleSide },
   roofDeck: { color: '#c79f69', roughness: 0.9, side: THREE.DoubleSide },
-  soffit: { color: '#f3f3f0', roughness: 0.8 },
+  soffit: { color: '#e2e3df', roughness: 0.9 },
   lvp: { color: '#8b6b4f', roughness: 0.55 },
   ashCabinet: { color: '#cbc2b4', roughness: 0.6 },
   quartz: { color: '#f2f0eb', roughness: 0.2 },
@@ -106,6 +107,7 @@ export function makeMaterial(key: string): THREE.MeshStandardMaterial {
   m.userData.baseColor = d.color
   if (d.map === 'seam') m.map = (SEAM ??= seamTexture())
   if (d.lap) patchLapSiding(m)
+  if (key === 'palmFrond' || key === 'palmTrunk') applyFocusFade(m)
   return m
 }
 

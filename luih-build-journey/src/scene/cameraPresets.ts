@@ -35,7 +35,7 @@ export const STATIONS: Record<string, CameraPose & { fov: number; label: string 
 /** 2623 S Bryant Cir — framed for its footprint, grand oaks and lot. */
 const FFE = 1.07
 export const BRYANT_PRESETS: Record<string, CameraPose> = {
-  overview: { pos: [16, 25, 46], target: [0, 3, -1] },
+  overview: { pos: [15, 19, 37], target: [0, 3.6, -1.5] },
   site: { pos: [4, 54, 32], target: [0, 0, 0] },
   foundation: { pos: [20, 19, 32], target: [0, 1, 0] },
   framing: { pos: [26, 15, 32], target: [0, 4, 0] },

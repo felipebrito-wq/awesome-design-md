@@ -55,7 +55,7 @@ function Effects() {
   return (
     <EffectComposer key="full" multisampling={0} enableNormalPass={false}>
       <N8AO aoRadius={1.6} intensity={2.2} distanceFalloff={1.2} quality="medium" halfRes />
-      <Bloom mipmapBlur intensity={0.55} luminanceThreshold={0.92} luminanceSmoothing={0.2} />
+      <Bloom mipmapBlur intensity={0.55} luminanceThreshold={1.0} luminanceSmoothing={0.2} />
       <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
       <SMAA />
     </EffectComposer>
