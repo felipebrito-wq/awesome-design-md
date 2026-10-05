@@ -9,6 +9,39 @@ npm install
 npm run dev          # → http://localhost:5173
 ```
 
+## Run it locally
+
+Requires **Node.js 20.19+** (LTS 22 recommended) and git.
+
+```bash
+git clone https://github.com/felipebrito-wq/awesome-design-md.git
+cd awesome-design-md
+git checkout claude/luih-build-journey
+cd luih-build-journey
+npm install
+npm run dev          # → http://localhost:5173
+```
+
+Already cloned? `git pull` on the branch, then `npm install && npm run dev`.
+
+### Real project data (2623 S Bryant Cir)
+
+The repo is public, so real LUIH data is **git-ignored** (`private/`, `public/private/`).
+Without it the app shows the demo house. To load the real project, unzip the
+private data bundle **inside `luih-build-journey/`** so you get:
+
+```
+luih-build-journey/
+  public/private/project.json          # imported Buildertrend schedule
+  public/private/bryant/plans/*.jpg     # sealed plan sheets + elevations
+  private/bt/34200410.json              # raw Buildertrend export (for re-import)
+```
+
+Restart `npm run dev` and the app opens on the Bryant project. To regenerate
+`project.json` from a fresh export: `node scripts/import-buildertrend.mjs private/bt/34200410.json`.
+
+Useful flags: `?quality=low` (lighter rendering), press <kbd>`</kbd> for the DEV panel.
+
 ## What you can do
 | | |
 |---|---|
