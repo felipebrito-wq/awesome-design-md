@@ -8,14 +8,14 @@ import { useJourney } from '@/store/useJourney'
 
 let tl: gsap.core.Timeline | null = null
 
-const SEGMENTS: { stageId: string; dur: number; xray?: boolean; camera: string; camDur?: number }[] = [
-  { stageId: 'stg-site', dur: 3.2, camera: 'site' },
-  { stageId: 'stg-foundation', dur: 3.6, camera: 'foundation' },
-  { stageId: 'stg-framing', dur: 4.6, camera: 'framing' },
-  { stageId: 'stg-roughins', dur: 4.4, camera: 'roughins', xray: true },
-  { stageId: 'stg-finishes', dur: 5.0, camera: 'finishes' },
-  { stageId: 'stg-complete', dur: 5.2, camera: 'complete' },
-]
+/** Seconds per construction stage, in order (~26 s total). Extra stages get the last value. */
+const DURATIONS = [3.2, 3.6, 4.6, 4.4, 5.0, 5.2]
+
+/** X-Ray runs during the stage where MEP goes into open walls: an explicit rough-in stage, else the first stage with MEP work. */
+function xrayStageId(stages: { id: string; name: string; milestones: { name: string }[] }[]): string | undefined {
+  const rough = stages.find((s) => /rough/i.test(s.id) || /rough/i.test(s.name))
+  return (rough ?? stages.find((s) => s.milestones.some((m) => /\bMEP\b|rough/i.test(m.name))))?.id
+}
 
 export function stopDemo() {
   tl?.kill()
@@ -54,16 +54,19 @@ export function playDemo() {
       }, 3200)
     },
   })
-  for (const seg of SEGMENTS) {
-    const stage = idx.stageById.get(seg.stageId)!
-    const end = idx.stageRange.get(seg.stageId)![1]
-    tl.call(() => {
+  // Driven by the project's own construction stages, so real Buildertrend jobs
+  // (whose stage ids differ from the demo house) play the same journey.
+  const xrayId = xrayStageId(idx.stages)
+  idx.stages.forEach((stage, i) => {
+    const dur = DURATIONS[Math.min(i, DURATIONS.length - 1)]
+    const end = idx.stageRange.get(stage.id)![1]
+    tl!.call(() => {
       const st = useJourney.getState()
       st.setDemo({ caption: { code: stage.code, title: stage.name, story: stage.story } })
-      st.requestCamera(seg.camera, seg.dur * 1.05)
-      st.setXray(!!seg.xray)
+      st.requestCamera(stage.cameraPreset, dur * 1.05)
+      st.setXray(stage.id === xrayId)
     })
-    tl.to(state, { cursor: end, duration: seg.dur, ease: 'sine.inOut' })
-  }
+    tl!.to(state, { cursor: end, duration: dur, ease: 'sine.inOut' })
+  })
   tl.call(() => useJourney.getState().setXray(false), [], '-=1.4')
 }
