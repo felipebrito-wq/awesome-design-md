@@ -23,7 +23,7 @@ export function ProjectOverview() {
   const openBlockers = d.project.blockers.filter((b) => !b.resolvedDate).length
 
   return (
-    <div className="surface pointer-events-auto mt-5 w-[300px] rounded-2xl px-4 py-3.5">
+    <div className="surface pointer-events-auto mt-5 w-[300px] rounded-2xl px-4 py-3.5 max-md:mt-3 max-md:w-full max-md:px-3 max-md:py-2.5">
       <div className="flex items-center gap-3.5">
         <div className="relative">
           <Ring value={d.overall} />

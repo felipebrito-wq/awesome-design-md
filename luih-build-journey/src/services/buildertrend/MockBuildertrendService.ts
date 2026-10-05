@@ -21,14 +21,17 @@ export class MockBuildertrendService implements BuildertrendService {
   private loaded: Promise<void>
 
   constructor() {
-    this.loaded = fetch('/private/project.json')
+    this.loaded = fetch('private/project.json')
       .then(async (r) => {
-        if (!r.ok || !(r.headers.get('content-type') ?? '').includes('json')) return
-        const p = (await r.json()) as Project
+        if (!r.ok) return
+        const p = (await r.json()) as Project // non-JSON (SPA fallback) throws -> demo
+        // Asset URLs resolve relative to the page so the build runs from any base path
+        for (const d of p.drawings ?? []) d.url = d.url.replace(/^\//, '')
+        for (const ph of p.photos ?? []) ph.url = ph.url.replace(/^\//, '')
         if (!p.components?.length && p.modelKey && MODEL_COMPONENTS[p.modelKey]) p.components = clone(MODEL_COMPONENTS[p.modelKey])
         Object.assign(p, { ...MODEL_DEFAULTS[p.modelKey ?? ''], ...p })
         // Jobsite-camera photo feed (placeholder captures until Buildertrend photos are wired)
-        const feed = await fetch(`/private/${p.modelKey}/photos/index.json`).then((x) => (x.ok && (x.headers.get('content-type') ?? '').includes('json') ? x.json() : [])).catch(() => [])
+        const feed = await fetch(`private/${p.modelKey}/photos/index.json`).then((x) => (x.ok ? x.json() : [])).catch(() => [])
         p.photos = [...(p.photos ?? []), ...(feed as Project['photos'])]
         this.project = p
       })

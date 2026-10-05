@@ -29,7 +29,7 @@ interface Mapped {
 const COMPONENT_RE = /^(c-[a-z0-9-]+?)(?:__|$)/i
 
 export function GlbHome({ url }: { url: string }) {
-  const gltf = useGLTF(url, '/draco/')
+  const gltf = useGLTF(url, 'draco/')
 
   const mapped = useMemo(() => {
     const out: Mapped[] = []

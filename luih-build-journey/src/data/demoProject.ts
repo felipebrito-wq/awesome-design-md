@@ -500,7 +500,7 @@ const photo = (
   tradeId: string | undefined,
   caption: string,
   station: string,
-): Photo => ({ id, date, stageId, taskId, location, tradeId, caption, station, url: `/photos/${id}.jpg`, source: 'placeholder' })
+): Photo => ({ id, date, stageId, taskId, location, tradeId, caption, station, url: `photos/${id}.jpg`, source: 'placeholder' })
 
 const photos: Photo[] = [
   photo('p01', '2026-01-06', 'stg-site', 't-survey', 'Front of lot', 'tp-survey', 'Permit posted, corners staked', 'street'),

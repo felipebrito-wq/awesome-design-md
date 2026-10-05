@@ -20,8 +20,8 @@ export function ExplorerPanel() {
   return (
     <aside
       className={cx(
-        'surface pointer-events-auto absolute top-4 right-4 bottom-4 flex w-[380px] flex-col overflow-hidden rounded-2xl transition-all duration-500 ease-[cubic-bezier(0.2,0.7,0.2,1)]',
-        visible ? 'translate-x-0 opacity-100' : 'pointer-events-none translate-x-[110%] opacity-0',
+        'surface pointer-events-auto absolute top-4 right-4 bottom-4 z-40 flex w-[380px] flex-col overflow-hidden rounded-2xl transition-all duration-500 ease-[cubic-bezier(0.2,0.7,0.2,1)] max-md:top-auto max-md:right-2 max-md:bottom-2 max-md:left-2 max-md:h-[64%] max-md:w-auto',
+        visible ? 'translate-x-0 opacity-100' : 'pointer-events-none translate-x-[110%] opacity-0 max-md:translate-x-0 max-md:translate-y-[110%]',
       )}
     >
       <button onClick={() => setOpen(false)} className="absolute top-3.5 right-3.5 z-20 rounded-full p-1.5 text-faint hover:bg-black/5 hover:text-ink" title="Close panel">

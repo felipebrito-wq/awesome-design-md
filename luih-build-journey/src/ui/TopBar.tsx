@@ -18,13 +18,13 @@ export function Brand() {
   return (
     <div className="pointer-events-auto">
       <div className="flex items-center gap-3">
-        <img src="/brand/luih_logo_dark.png" alt="LUIH" className="h-[22px] w-auto" />
+        <img src="brand/luih_logo_dark.png" alt="LUIH" className="h-[22px] w-auto" />
         <span className="h-4 w-px bg-line" />
         <span className="text-[10px] font-medium tracking-[0.2em] text-mute uppercase">Build Journey</span>
         {audience === 'internal' && <span className="ml-1 rounded-full bg-ink px-2 py-[2px] text-[9.5px] font-semibold tracking-[0.14em] text-white uppercase">Internal</span>}
       </div>
-      <h1 className="mt-3 text-[26px] leading-none font-semibold tracking-[-0.02em] text-ink">{project.name}</h1>
-      <div className="mt-1.5 text-[12px] text-mute">
+      <h1 className="mt-3 text-[26px] max-md:mt-2 max-md:text-[20px] leading-none font-semibold tracking-[-0.02em] text-ink">{project.name}</h1>
+      <div className="mt-1.5 text-[12px] text-mute max-md:hidden">
         {project.model} · {project.address}
       </div>
     </div>
@@ -82,9 +82,9 @@ export function Toolbar() {
           value={view}
           onChange={setView}
           options={[
-            { value: 'model', label: <span className="inline-flex items-center gap-1.5"><Box size={13} /> 3D Model</span> },
-            { value: 'photo', label: <span className="inline-flex items-center gap-1.5"><Camera size={13} /> Site Photo</span> },
-            { value: 'compare', label: <span className="inline-flex items-center gap-1.5"><Columns2 size={13} /> Compare</span> },
+            { value: 'model', label: <span className="inline-flex items-center gap-1.5"><Box size={13} /> <span className="max-md:hidden">3D Model</span></span> },
+            { value: 'photo', label: <span className="inline-flex items-center gap-1.5"><Camera size={13} /> <span className="max-md:hidden">Site Photo</span></span> },
+            { value: 'compare', label: <span className="inline-flex items-center gap-1.5"><Columns2 size={13} /> <span className="max-md:hidden">Compare</span></span> },
           ]}
         />
       </div>
@@ -94,7 +94,7 @@ export function Toolbar() {
           className={cx('inline-flex h-9 items-center gap-1.5 rounded-full px-3.5 text-[12px] font-medium transition-colors', xray ? 'bg-ink text-white' : 'text-ink-2 hover:bg-black/[0.05]')}
           title="X-Ray (X)"
         >
-          <ScanEye size={14} /> X-Ray
+          <ScanEye size={14} /> <span className="max-md:hidden">X-Ray</span>
         </button>
         <IconButton title="Camera views" onClick={() => setMenu((m) => !m)} active={menu}>
           <Video size={15} />
@@ -102,14 +102,14 @@ export function Toolbar() {
         <IconButton title="Reset camera (R)" onClick={() => requestCamera('overview', 0.9)}>
           <RotateCcw size={15} />
         </IconButton>
-        <IconButton title="Fullscreen (F)" onClick={toggleFs}>
+        <IconButton title="Fullscreen (F)" onClick={toggleFs} className="max-md:hidden">
           {fs ? <Minimize size={15} /> : <Expand size={15} />}
         </IconButton>
-        <IconButton title="Details panel" onClick={() => setPanelOpen(!panelOpen)} active={panelOpen}>
+        <IconButton title="Details panel" onClick={() => setPanelOpen(!panelOpen)} active={panelOpen} className="max-md:hidden">
           <PanelRight size={15} />
         </IconButton>
         {menu && (
-          <div className="surface anim-fade-up absolute top-12 right-0 w-48 rounded-xl p-1.5">
+          <div className="surface anim-fade-up absolute top-12 right-0 w-48 rounded-xl p-1.5 max-md:top-auto max-md:bottom-12">
             {VIEWS.map((v) => (
               <button
                 key={v.key}

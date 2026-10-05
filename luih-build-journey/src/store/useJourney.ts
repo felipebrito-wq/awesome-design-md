@@ -106,7 +106,7 @@ export const useJourney = create<JourneyState>((set, get) => ({
   view: 'model',
   compareSplit: 0.5,
   compareSourceId: null,
-  panelOpen: true,
+  panelOpen: typeof window === 'undefined' || window.innerWidth >= 768, // phones open details on demand
   gallery: { open: false },
   demo: { playing: false, caption: null },
   feed: [],

@@ -8,7 +8,7 @@ import { Suspense, useEffect, useState } from 'react'
 import { GlbHome } from './GlbHome'
 import { ProceduralHome } from './ProceduralHome'
 
-export const HOME_MODEL_URL = '/models/home.glb'
+export const HOME_MODEL_URL = 'models/home.glb'
 
 function useAssetAvailable(url: string) {
   const [ok, setOk] = useState<boolean | null>(null)

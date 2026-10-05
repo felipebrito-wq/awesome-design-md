@@ -29,7 +29,10 @@ export function CameraRig() {
     if (!pose || !c) return
     tl.current?.kill()
     const dur = duration ?? 1
-    const fov = pose.fov ?? 35
+    // Presets are framed for a ~16:10 screen; on narrow/portrait screens keep the same horizontal coverage
+    const base = pose.fov ?? 35
+    const aspect = size.width / Math.max(1, size.height)
+    const fov = aspect >= 1.4 ? base : Math.min(78, (2 * Math.atan(Math.tan((base * Math.PI) / 360) * (1.4 / aspect)) * 180) / Math.PI)
     const t = new THREE.Vector3(...pose.target)
     if (dur <= 0) {
       camera.position.set(...pose.pos)
@@ -44,7 +47,7 @@ export function CameraRig() {
       .to(camera.position, { x: pose.pos[0], y: pose.pos[1], z: pose.pos[2], duration: dur, ease: 'power3.inOut' }, 0)
       .to(c.target, { x: t.x, y: t.y, z: t.z, duration: dur, ease: 'power3.inOut' }, 0)
       .to(camera, { fov, duration: dur, ease: 'power2.inOut', onUpdate: () => camera.updateProjectionMatrix() }, 0)
-  }, [nonce, camera])
+  }, [nonce, camera]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const c = controls.current

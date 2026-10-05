@@ -9,5 +9,6 @@ export default defineConfig({
     alias: { '@': path.resolve(import.meta.dirname, 'src') },
   },
   server: { port: 5173 },
+  base: './',
   build: { chunkSizeWarningLimit: 2500 },
 })

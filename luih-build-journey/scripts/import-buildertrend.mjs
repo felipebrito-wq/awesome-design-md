@@ -245,7 +245,7 @@ const drawings = [
   ['A-5', 'Right Side Elevation', 'elev-right.jpg', 'elev-right'],
   ['A-6', 'Rear Elevation', 'elev-rear.jpg', 'elev-rear'],
   ['A-6', 'Left Side Elevation', 'elev-left.jpg', 'elev-left'],
-].map(([sheet, title, file, station]) => ({ id: 'dw-' + file.replace('.jpg', ''), sheet, title, url: `/private/bryant/plans/${file}`, station, rev: 'R3 · Sealed 03/26/2025' }))
+].map(([sheet, title, file, station]) => ({ id: 'dw-' + file.replace('.jpg', ''), sheet, title, url: `private/bryant/plans/${file}`, station, rev: 'R3 · Sealed 03/26/2025' }))
 
 const doc = (id, name, kind, date, stageId, internalOnly = false) => ({ id, name, kind, date, stageId, url: '#', internalOnly })
 const documents = [

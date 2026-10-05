@@ -12,13 +12,15 @@ import { Lighting } from './Lighting'
 import { Site } from './Site'
 
 /** ?quality=low disables post-processing + caps DPR (older laptops / screen share). */
-const quality = new URLSearchParams(location.search).get('quality') ?? 'high'
+// Phones/tablets default to a lighter pipeline (no post FX, capped DPR) to stay smooth and cool.
+const touch = typeof matchMedia !== 'undefined' && matchMedia('(pointer: coarse)').matches
+const quality = new URLSearchParams(location.search).get('quality') ?? (touch ? 'low' : 'high')
 
 export function ConstructionScene() {
   return (
     <Canvas
       shadows
-      dpr={[1, quality === 'low' ? 1 : 2]}
+      dpr={[1, quality === 'low' ? (touch ? 1.5 : 1) : 2]}
       gl={{ antialias: false, powerPreference: 'high-performance' }}
       camera={{ fov: 35, near: 0.1, far: 2000, position: PRESETS.overview.pos }}
       onCreated={({ gl, scene, camera }) => {

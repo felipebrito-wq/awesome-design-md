@@ -157,8 +157,8 @@ export function ConstructionTimeline() {
       </div>
       {/* Month labels */}
       <div className="relative -mt-1 h-3.5">
-        {months.map((m) => (
-          <span key={m.day} className="absolute -translate-x-1/2 text-[10px] font-medium tracking-[0.14em] text-faint uppercase" style={{ left: `${toX(m.day)}%` }}>
+        {months.map((m, i) => (
+          <span key={m.day} className={cx('absolute -translate-x-1/2 text-[10px] font-medium tracking-[0.14em] text-faint uppercase', i % 2 === 1 && 'max-md:hidden')} style={{ left: `${toX(m.day)}%` }}>
             {m.label}
           </span>
         ))}

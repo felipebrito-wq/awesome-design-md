@@ -40,7 +40,7 @@ export function EventFeed() {
   const toasts = useJourney((s) => s.toasts)
   const dismiss = useJourney((s) => s.dismissToast)
   return (
-    <div className="pointer-events-none absolute top-5 left-1/2 z-30 flex w-[360px] -translate-x-1/2 flex-col gap-2">
+    <div className="pointer-events-none absolute top-5 left-1/2 z-30 flex w-[360px] max-w-[calc(100vw-24px)] -translate-x-1/2 flex-col gap-2">
       {toasts.map((n) => (
         <button key={n.id} onClick={() => dismiss(n.id)} className={cx('surface anim-fade-up pointer-events-auto flex items-center gap-3 rounded-xl px-3 py-2.5 text-left')}>
           <Icon n={n} />

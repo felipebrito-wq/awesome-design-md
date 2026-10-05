@@ -19,7 +19,7 @@ export function DevPanel() {
   if (demo) return null
   if (!open)
     return (
-      <button onClick={() => setOpen(true)} className="pointer-events-auto absolute bottom-[156px] left-6 inline-flex items-center gap-1.5 rounded-full bg-ink/80 px-2.5 py-1 text-[10px] font-semibold tracking-[0.14em] text-white/90 uppercase hover:bg-ink" title="Developer tools (`)">
+      <button onClick={() => setOpen(true)} className="pointer-events-auto absolute bottom-[156px] left-6 inline-flex max-md:hidden items-center gap-1.5 rounded-full bg-ink/80 px-2.5 py-1 text-[10px] font-semibold tracking-[0.14em] text-white/90 uppercase hover:bg-ink" title="Developer tools (`)">
         <Wrench size={11} /> Dev
       </button>
     )
