@@ -14,7 +14,10 @@ import { Site } from './Site'
 /** ?quality=low disables post-processing + caps DPR (older laptops / screen share). */
 // Phones/tablets default to a lighter pipeline (no post FX, capped DPR) to stay smooth and cool.
 const touch = typeof matchMedia !== 'undefined' && matchMedia('(pointer: coarse)').matches
-const quality = new URLSearchParams(location.search).get('quality') ?? (touch ? 'low' : 'high')
+const params = new URLSearchParams(location.search)
+const quality = params.get('quality') ?? (touch ? 'low' : 'high')
+/** Debug: ?fx=noao | nobloom to isolate post-processing passes. */
+const fx = params.get('fx') ?? ''
 
 export function ConstructionScene() {
   return (
@@ -54,8 +57,8 @@ function Effects() {
     )
   return (
     <EffectComposer key="full" multisampling={0} enableNormalPass={false}>
-      <N8AO aoRadius={1.6} intensity={2.2} distanceFalloff={1.2} quality="medium" halfRes />
-      <Bloom mipmapBlur intensity={0.55} luminanceThreshold={1.0} luminanceSmoothing={0.2} />
+      {fx !== 'noao' ? <N8AO aoRadius={1.6} intensity={2.2} distanceFalloff={1.2} quality="medium" halfRes /> : <></>}
+      {fx !== 'nobloom' ? <Bloom mipmapBlur intensity={0.55} luminanceThreshold={1.0} luminanceSmoothing={0.2} /> : <></>}
       <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
       <SMAA />
     </EffectComposer>

@@ -7,7 +7,7 @@
 import { box } from './geom'
 import type { Inst } from './partTypes'
 
-export type OpeningKind = 'window' | 'door' | 'slider' | 'garage' | 'entry'
+export type OpeningKind = 'window' | 'fixed' | 'octagon' | 'door' | 'slider' | 'garage' | 'entry'
 
 export interface Opening {
   u0: number

@@ -34,9 +34,14 @@ export interface PartTargets {
   ghost: boolean
   colorT: number
   clickable: boolean
+  /** Built only in the forecast (cursor after today, not yet reported complete): render as planned, not as fact. */
+  planned: boolean
 }
 
 const ACCENT = '#20a483'
+/** Forecast-only work renders as an opaque slate "clay" massing (LUIH OS slate-300), never as finished fact. */
+export const PLANNED_OPACITY = 1
+export const PLANNED_TINT = '#b7c8d5'
 const compCache = new WeakMap<Project, Map<string, ComponentRecord>>()
 
 export function componentIndex(p: Project) {
@@ -70,6 +75,14 @@ export function resolveTargets(meta: PartMeta, s: State, now: number): PartTarge
   const appearTask = meta.appearTask ?? comp?.taskId
   let p = prog(appearTask)
   if (meta.window) p = clamp01((p - meta.window[0]) / (meta.window[1] - meta.window[0]))
+  // Reported progress as of today (Buildertrend status) vs. what the schedule forecasts at the cursor
+  let pToday = 1
+  if (appearTask && appearTask !== '__always' && cursor > today + 0.5) {
+    const t = idx.taskById.get(appearTask)
+    pToday = t ? taskProgressAt(t, today, today) : 0
+    if (meta.window) pToday = clamp01((pToday - meta.window[0]) / (meta.window[1] - meta.window[0]))
+  }
+  const planned = p > 0.001 && p - pToday > 0.02 && !s.demo.playing && s.renderDate == null // the cinematic labels its forecast in the caption instead
   let d = meta.disappearTask ? prog(meta.disappearTask) : 0
   if (meta.disappearWindow) d = clamp01((d - meta.disappearWindow[0]) / (meta.disappearWindow[1] - meta.disappearWindow[0]))
 
@@ -129,5 +142,6 @@ export function resolveTargets(meta: PartMeta, s: State, now: number): PartTarge
     ghost,
     colorT: meta.colorTo ? prog(meta.colorTo.task) : 0,
     clickable: opacity > 0.3 && p > 0.02 && d < 0.98,
+    planned,
   }
 }

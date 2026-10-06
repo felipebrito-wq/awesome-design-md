@@ -19,7 +19,7 @@ export function DevPanel() {
   if (demo) return null
   if (!open)
     return (
-      <button onClick={() => setOpen(true)} className="pointer-events-auto absolute bottom-[156px] left-6 inline-flex max-md:hidden items-center gap-1.5 rounded-full bg-ink/80 px-2.5 py-1 text-[10px] font-semibold tracking-[0.14em] text-white/90 uppercase hover:bg-ink" title="Developer tools (`)">
+      <button onClick={() => setOpen(true)} className="pointer-events-auto absolute bottom-[176px] left-6 inline-flex max-md:hidden items-center gap-1.5 rounded-full bg-ink/80 px-2.5 py-1 text-[10px] font-semibold tracking-[0.14em] text-white/90 uppercase hover:bg-ink" title="Developer tools (`)">
         <Wrench size={11} /> Dev
       </button>
     )
@@ -68,13 +68,13 @@ function DevPanelBody({ onClose }: { onClose: () => void }) {
     )
 
   return (
-    <div className="surface anim-fade-up pointer-events-auto absolute bottom-[156px] left-6 z-30 max-h-[calc(100vh-200px)] w-[320px] overflow-y-auto rounded-2xl p-4 scroll-thin">
+    <div className="surface anim-fade-up pointer-events-auto absolute bottom-[176px] left-6 z-30 max-h-[calc(100vh-200px)] w-[320px] overflow-y-auto rounded-xl p-4 scroll-thin">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Wrench size={13} />
-          <span className="text-[12px] font-semibold tracking-[0.14em] uppercase">Dev tools</span>
+          <span className="text-caption font-semibold tracking-[0.14em] uppercase">Dev tools</span>
         </div>
-        <button onClick={onClose} className="rounded-full p-1 text-faint hover:bg-black/5 hover:text-ink">
+        <button onClick={onClose} className="rounded-full p-1 text-mute hover:bg-black/5 hover:text-ink">
           <X size={14} />
         </button>
       </div>
@@ -105,11 +105,11 @@ function DevPanelBody({ onClose }: { onClose: () => void }) {
             setClock(null)
           }}
         />
-        <div className="mt-1 text-[10.5px] text-faint">Advances actuals per forecast — the house, panels and progress follow.</div>
+        <div className="mt-1 text-[10px] text-mute">Advances actuals per forecast — the house, panels and progress follow.</div>
       </Section>
 
       <Section title="Jump to stage">
-        <select className="w-full rounded-lg border border-black/10 bg-white px-2 py-1.5 text-[12px]" value={s.focusStageId ?? ''} onChange={(e) => s.selectStage(e.target.value || null)}>
+        <select className="w-full rounded-lg border border-black/10 bg-white px-2 py-1.5 text-caption" value={s.focusStageId ?? ''} onChange={(e) => s.selectStage(e.target.value || null)}>
           <option value="">— current —</option>
           {d.idx.stages.map((st) => (
             <option key={st.id} value={st.id}>
@@ -138,7 +138,7 @@ function DevPanelBody({ onClose }: { onClose: () => void }) {
 
       <Section title="Inspection status">
         <div className="flex gap-1.5">
-          <select className="min-w-0 flex-1 rounded-lg border border-black/10 bg-white px-2 py-1.5 text-[12px]" value={inspId} onChange={(e) => setInspId(e.target.value)}>
+          <select className="min-w-0 flex-1 rounded-lg border border-black/10 bg-white px-2 py-1.5 text-caption" value={inspId} onChange={(e) => setInspId(e.target.value)}>
             {inspections.map((i) => (
               <option key={i.id} value={i.id}>
                 {i.name} — {i.result}
@@ -146,7 +146,7 @@ function DevPanelBody({ onClose }: { onClose: () => void }) {
             ))}
           </select>
           <select
-            className="rounded-lg border border-black/10 bg-white px-2 py-1.5 text-[12px]"
+            className="rounded-lg border border-black/10 bg-white px-2 py-1.5 text-caption"
             value=""
             onChange={(e) => inspId && e.target.value && publish(ev('inspection.result', { inspectionId: inspId, result: e.target.value as InspectionResult }, 'dev'))}
           >
@@ -196,14 +196,14 @@ function DevPanelBody({ onClose }: { onClose: () => void }) {
         <button
           onClick={() => void s.simulateSync()}
           disabled={s.syncing}
-          className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-3 py-2 text-[12px] font-medium text-white hover:brightness-110 disabled:opacity-60"
+          className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-3 py-2 text-caption font-medium text-white hover:brightness-110 disabled:opacity-60"
         >
           <RefreshCw size={13} className={cx(s.syncing && 'animate-spin')} /> Simulate Buildertrend Sync
         </button>
       </Section>
 
       <Section title="Homeowner settings">
-        <label className="flex items-center gap-2 text-[12px] text-ink-2">
+        <label className="flex items-center gap-2 text-caption text-ink-2">
           <input
             type="checkbox"
             checked={d.project.settings.showFinancials}
@@ -212,7 +212,7 @@ function DevPanelBody({ onClose }: { onClose: () => void }) {
           Show financials to homeowner
         </label>
       </Section>
-      <div className="mt-3 text-[10.5px] leading-snug text-faint">Shortcuts: X x-ray · P play · ` dev · R reset camera · F fullscreen · ←/→ milestones · 1–6 stages</div>
+      <div className="mt-3 text-[10px] leading-snug text-mute">Shortcuts: X x-ray · P play · ` dev · R reset camera · F fullscreen · ←/→ milestones · 1–6 stages</div>
     </div>
   )
 }
@@ -228,7 +228,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 
 function Btn({ children, onClick }: { children: ReactNode; onClick: () => void }) {
   return (
-    <button onClick={onClick} className="rounded-lg border border-black/10 bg-white px-2.5 py-1.5 text-left text-[11.5px] font-medium text-ink-2 hover:border-black/20 hover:text-ink">
+    <button onClick={onClick} className="rounded-lg border border-black/10 bg-white px-2.5 py-1.5 text-left text-xs font-medium text-ink-2 hover:border-black/20 hover:text-ink">
       {children}
     </button>
   )

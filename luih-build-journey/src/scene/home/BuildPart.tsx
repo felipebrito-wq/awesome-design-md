@@ -1,12 +1,12 @@
 import { useFrame, type ThreeEvent } from '@react-three/fiber'
-import { useLayoutEffect, useMemo, useRef } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { clamp01 } from '@/lib/dates'
 import { sceneFlags } from '@/lib/capture'
 import { journey } from '@/store/useJourney'
 import { GHOST_MATERIAL, makeMaterial } from './materials'
 import type { Anim, Geo, Inst, PartSpec } from './partTypes'
-import { resolveTargets, type PartMeta } from './partState'
+import { PLANNED_TINT, resolveTargets, type PartMeta } from './partState'
 
 export const GEOMETRIES: Record<Geo, THREE.BufferGeometry> = {
   box: new THREE.BoxGeometry(1, 1, 1),
@@ -23,6 +23,8 @@ const _s = new THREE.Vector3()
 const _a = new THREE.Vector3()
 const _off = new THREE.Vector3()
 const _c = new THREE.Color()
+const WHITE = new THREE.Color('#ffffff')
+const PLANNED_COLOR = new THREE.Color(PLANNED_TINT)
 
 const easeOut = (t: number) => 1 - Math.pow(1 - t, 3)
 const easeOutBack = (t: number) => {
@@ -98,6 +100,9 @@ export function BuildPart({ spec }: { spec: PartSpec }) {
   const material = useMemo(() => makeMaterial(spec.mat), [spec.mat])
   const geometry = spec.custom ?? GEOMETRIES[spec.geo]
   const n = spec.inst.length
+  // Free GPU resources when the model changes (project switch); shared primitive geometries stay.
+  useEffect(() => () => material.dispose(), [material])
+  useEffect(() => () => spec.custom?.dispose(), [spec.custom])
 
   const prep = useMemo(() => {
     const keys = spec.inst.map((x, i) => x.g ?? i)
@@ -127,7 +132,7 @@ export function BuildPart({ spec }: { spec: PartSpec }) {
     [spec, material],
   )
 
-  const st = useRef({ p: -1, d: -1, op: -1, ei: 0, colorT: -1, lastP: -2, lastD: -2, clickable: true, transparent: material.transparent })
+  const st = useRef({ p: -1, d: -1, op: -1, ei: 0, colorT: -1, pl: 0, lastP: -2, lastD: -2, clickable: true, transparent: material.transparent })
   const baseColor = useMemo(() => new THREE.Color(material.userData.baseColor as string), [material])
   const toColor = useMemo(() => (spec.colorTo ? new THREE.Color(spec.colorTo.color) : null), [spec.colorTo])
 
@@ -200,10 +205,13 @@ export function BuildPart({ spec }: { spec: PartSpec }) {
     material.opacity = S.op
     material.emissive.set(t.emissive)
     material.emissiveIntensity = S.ei
+    const pl = t.planned ? 1 : 0
+    S.pl = snap ? pl : S.pl + (pl - S.pl) * ko
     if (toColor) {
       S.colorT = snap ? t.colorT : S.colorT + (t.colorT - S.colorT) * ko
       material.color.copy(baseColor).lerp(toColor, S.colorT)
-    }
+    } else material.color.copy(prep.hasColor ? WHITE : baseColor)
+    if (S.pl > 0.002 && !material.transparent) material.color.lerp(PLANNED_COLOR, 0.8 * S.pl)
     const clickable = !spec.inert && t.clickable && visible
     if (clickable !== S.clickable) {
       mesh.raycast = clickable ? THREE.InstancedMesh.prototype.raycast : noRaycast

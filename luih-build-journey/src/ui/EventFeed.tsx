@@ -45,10 +45,10 @@ export function EventFeed() {
         <button key={n.id} onClick={() => dismiss(n.id)} className={cx('surface anim-fade-up pointer-events-auto flex items-center gap-3 rounded-xl px-3 py-2.5 text-left')}>
           <Icon n={n} />
           <div className="min-w-0 flex-1">
-            <div className="truncate text-[12.5px] font-medium">{n.title}</div>
-            {n.detail && <div className="truncate text-[11px] text-mute">{n.detail}</div>}
+            <div className="truncate text-sm font-medium">{n.title}</div>
+            {n.detail && <div className="truncate text-xs text-mute">{n.detail}</div>}
           </div>
-          <span className="text-[10px] tracking-wide text-faint uppercase">Buildertrend</span>
+          <span className="text-[10px] tracking-wide text-mute uppercase">Buildertrend</span>
         </button>
       ))}
     </div>
@@ -65,9 +65,11 @@ export function Celebration() {
       <div className="relative flex flex-col items-center">
         <span className="ring-out absolute top-1/2 left-1/2 h-40 w-40 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/80" />
         <span className="ring-out absolute top-1/2 left-1/2 h-40 w-40 -translate-x-1/2 -translate-y-1/2 rounded-full border border-accent/60" style={{ animationDelay: '220ms' }} />
-        <div className="caption-in rounded-2xl bg-white/90 px-6 py-4 text-center shadow-xl backdrop-blur">
-          <div className="kicker justify-center">{big ? 'Stage complete' : 'Milestone reached'}</div>
-          <div className={cx('mt-1 font-semibold tracking-[-0.015em]', big ? 'text-[24px]' : 'text-[17px]')}>{c.title.replace('Milestone complete: ', '')}</div>
+        <div className="surface caption-in rounded-xl px-6 py-4 text-center">
+          <div className={cx('font-semibold tracking-[-0.01em] text-ink', big ? 'text-2xl' : 'text-lg')}>{c.title.replace('Milestone complete: ', '')}</div>
+          <div className="mt-1 inline-flex items-center gap-1.5 text-caption font-medium text-accent-dark">
+            <Check size={14} strokeWidth={2.5} /> {big ? 'Stage complete' : 'Milestone reached'}
+          </div>
         </div>
       </div>
     </div>

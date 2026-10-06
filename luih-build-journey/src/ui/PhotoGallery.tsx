@@ -39,18 +39,20 @@ export function PhotoGallery() {
   const trade = d.project.tradePartners.find((t) => t.id === photo?.tradeId)
 
   return (
-    <div className="anim-fade-up pointer-events-auto fixed inset-0 z-50 flex flex-col bg-[#0f172a]/96 text-white backdrop-blur-sm">
+    <div className="anim-fade-up pointer-events-auto fixed inset-0 z-50 flex flex-col bg-ink/95 text-white backdrop-blur-sm">
       <div className="flex items-center justify-between px-8 pt-6">
         <div>
-          <div className="kicker">Site photos · Buildertrend</div>
-          <div className="mt-1 text-[18px] font-semibold">{list.length} photos</div>
+          <div className="text-lg font-semibold">Site photos</div>
+          <div className="mt-0.5 text-caption text-white/75">
+            <span className="num">{list.length}</span> photos · Buildertrend
+          </div>
         </div>
         <div className="flex items-center gap-1">
-          <button onClick={() => setStageFilter(undefined)} className={cx('rounded-full px-3 py-1.5 text-[11.5px] font-medium', !stageFilter ? 'bg-white text-ink' : 'text-white/60 hover:text-white')}>
+          <button onClick={() => setStageFilter(undefined)} className={cx('rounded-full px-3 py-1.5 text-xs font-medium', !stageFilter ? 'bg-white text-ink' : 'text-white/60 hover:text-white')}>
             All
           </button>
           {d.idx.stages.map((s) => (
-            <button key={s.id} onClick={() => setStageFilter(s.id)} className={cx('rounded-full px-3 py-1.5 text-[11.5px] font-medium', stageFilter === s.id ? 'bg-white text-ink' : 'text-white/60 hover:text-white')}>
+            <button key={s.id} onClick={() => setStageFilter(s.id)} className={cx('rounded-full px-3 py-1.5 text-xs font-medium', stageFilter === s.id ? 'bg-white text-ink' : 'text-white/60 hover:text-white')}>
               {s.shortName}
             </button>
           ))}
@@ -68,15 +70,15 @@ export function PhotoGallery() {
             <img key={photo.id} src={photo.url} alt={photo.caption} className="anim-fade-up max-h-full max-w-full rounded-lg object-contain shadow-2xl" />
           </div>
           <div className="w-[260px] shrink-0 self-center">
-            <div className="text-[10.5px] font-medium tracking-[0.2em] text-white/45 uppercase">{fmtDay(photo.date, { year: true })}</div>
-            <div className="mt-2 text-[20px] leading-tight font-semibold">{photo.location}</div>
-            <div className="mt-1 text-[14px] text-white/75">{photo.caption}</div>
-            <dl className="mt-6 space-y-3 text-[12px]">
+            <div className="text-[10px] font-medium tracking-[0.2em] text-white/45 uppercase">{fmtDay(photo.date, { year: true })}</div>
+            <div className="mt-2 text-xl leading-tight font-semibold">{photo.location}</div>
+            <div className="mt-1 text-sm text-white/75">{photo.caption}</div>
+            <dl className="mt-6 space-y-3 text-caption">
               <Meta k="Stage" v={stage?.name} />
               <Meta k="Trade" v={trade?.name ?? '—'} />
               <Meta k="Source" v={photo.source === 'placeholder' ? 'Placeholder (rendered from model)' : 'Buildertrend'} />
             </dl>
-            <button onClick={() => setIdx(Math.min(list.length - 1, idx + 1))} className="mt-8 inline-flex items-center gap-1 text-[12px] text-white/60 hover:text-white disabled:opacity-20" disabled={idx >= list.length - 1}>
+            <button onClick={() => setIdx(Math.min(list.length - 1, idx + 1))} className="mt-8 inline-flex items-center gap-1 text-caption text-white/60 hover:text-white disabled:opacity-20" disabled={idx >= list.length - 1}>
               Next photo <ChevronRight size={14} />
             </button>
           </div>

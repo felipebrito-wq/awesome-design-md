@@ -83,11 +83,13 @@ export const SYSTEM_INDEX = Object.fromEntries(SYSTEMS.map((s) => [s.key, s])) a
  * structure and building systems read through the house.
  */
 export const XRAY_OPACITY: Record<LayerGroup, number> = {
+  // Finishes nearly vanish so the CMU/tie-beam frame and the systems read without
+  // stacks of overlapping translucent skins.
   SITE: 0.3,
-  FOUNDATION: 0.22,
+  FOUNDATION: 0.24,
   STRUCTURE: 0.2,
   MEP: 1,
-  ENVELOPE: 0.1,
-  INTERIOR: 0.12,
-  EXTERIOR: 0.3,
+  ENVELOPE: 0.045,
+  INTERIOR: 0.03,
+  EXTERIOR: 0.25,
 }

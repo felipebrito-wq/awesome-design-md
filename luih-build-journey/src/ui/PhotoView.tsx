@@ -30,12 +30,12 @@ export function PhotoView() {
       <img key={photo.id} src={photo.url} alt={photo.caption} className="anim-fade-up h-full w-full object-cover" />
       <div className="absolute inset-x-0 bottom-0 h-72 bg-gradient-to-t from-black/55 to-transparent" />
       <div className="absolute bottom-[190px] left-8 text-white">
-        <div className="text-[10.5px] font-medium tracking-[0.2em] text-white/70 uppercase">
+        <div className="text-[10px] font-medium tracking-[0.2em] text-white/70 uppercase">
           Site photo · {fmtDay(photo.date, { year: true })} · {stage?.shortName}
         </div>
-        <div className="mt-2 text-[26px] font-semibold tracking-[-0.01em]">{photo.location}</div>
-        <div className="text-[14px] text-white/80">{photo.caption}</div>
-        <button onClick={() => openGallery({ photoId: photo.id })} className="pointer-events-auto mt-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-3.5 py-1.5 text-[12px] font-medium backdrop-blur hover:bg-white/25">
+        <div className="mt-2 text-2xl font-semibold tracking-[-0.01em]">{photo.location}</div>
+        <div className="text-sm text-white/80">{photo.caption}</div>
+        <button onClick={() => openGallery({ photoId: photo.id })} className="pointer-events-auto mt-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-3.5 py-1.5 text-caption font-medium backdrop-blur hover:bg-white/25">
           <Images size={14} /> All photos
         </button>
       </div>
@@ -109,9 +109,9 @@ export function CompareView() {
 
 function Label({ eyebrow, title, className }: { eyebrow: string; title: string; className?: string }) {
   return (
-    <div className={cx('pointer-events-none absolute top-[150px] rounded-xl bg-ink/70 px-4 py-3 text-white backdrop-blur', className)}>
-      <div className="text-[10px] font-semibold tracking-[0.16em] text-accent uppercase">{eyebrow}</div>
-      <div className="mt-1 text-[14px] font-medium">{title}</div>
+    <div className={cx('pointer-events-none absolute top-[150px] rounded-xl bg-ink/85 px-4 py-3 text-white', className)}>
+      <div className="text-sm font-medium">{title}</div>
+      <div className="mt-0.5 text-caption text-white/75">{eyebrow}</div>
     </div>
   )
 }

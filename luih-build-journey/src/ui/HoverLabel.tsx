@@ -28,8 +28,8 @@ export function HoverLabel() {
     <div ref={ref} className="pointer-events-none fixed top-0 left-0 z-40" style={{ opacity: comp ? 1 : 0, transition: 'opacity 150ms' }}>
       {comp && (
         <div className="rounded-lg bg-ink/90 px-2.5 py-1.5 text-white shadow-lg backdrop-blur">
-          <div className="text-[12px] font-medium">{comp.name}</div>
-          <div className="text-[10.5px] text-white/65">{status}</div>
+          <div className="text-caption font-medium">{comp.name}</div>
+          <div className="text-[10px] text-white/65">{status}</div>
         </div>
       )}
     </div>

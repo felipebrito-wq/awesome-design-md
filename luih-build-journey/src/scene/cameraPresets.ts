@@ -32,32 +32,38 @@ export const STATIONS: Record<string, CameraPose & { fov: number; label: string 
   'int-garage': { pos: [4.0, 1.6, 4.4], target: [10.8, 1.5, -1.5], fov: 62, label: 'Garage' },
 }
 
-/** 2623 S Bryant Cir — framed for its footprint, grand oaks and lot. */
-const FFE = 1.07
+/**
+ * 2623 S Bryant Cir — framed on the plan-accurate model (footprint ±12.9 m × ±9.9 m,
+ * ridge ≈ 12.2 m). Elevation stations are long-lens orthographic-like views that
+ * line up with sheets A-5/A-6 in Compare.
+ */
+const FFE = 1.83
 export const BRYANT_PRESETS: Record<string, CameraPose> = {
-  overview: { pos: [15, 19, 37], target: [0, 3.6, -1.5] },
-  site: { pos: [4, 54, 32], target: [0, 0, 0] },
-  foundation: { pos: [20, 19, 32], target: [0, 1, 0] },
-  framing: { pos: [26, 15, 32], target: [0, 4, 0] },
-  roughins: { pos: [20, 11, 22], target: [-1, 4, 0] },
-  finishes: { pos: [5, 6.5, 40], target: [0, 4.6, 2] },
-  complete: { pos: [-12, 7.5, -42], target: [0, 4.2, -2] },
-  front: { pos: [4, 4.5, 38], target: [0, 4.8, 2] },
-  rear: { pos: [-12, 7.5, -42], target: [0, 4.2, -2] },
-  aerial: { pos: [0.5, 62, 4], target: [0, 0, 0] },
-  interior: { pos: [-3.5, FFE + 1.6, -3.4], target: [3.3, FFE + 1.5, -0.3] },
+  overview: { pos: [21, 15, 36], target: [0, 4.6, 0] },
+  site: { pos: [4, 56, 34], target: [0, 0, 0] },
+  foundation: { pos: [22, 18, 32], target: [0, 1.4, 0] },
+  framing: { pos: [27, 16, 33], target: [0, 5.2, 0] },
+  roughins: { pos: [21, 12, 24], target: [-1, 5, 0] },
+  finishes: { pos: [7, 6.5, 40], target: [0, 5.2, 1] },
+  complete: { pos: [-15, 8.5, -40], target: [0, 5.2, -2] },
+  front: { pos: [3, 4.8, 40], target: [0, 5.4, 1] },
+  rear: { pos: [-15, 8.5, -40], target: [0, 5.2, -2] },
+  aerial: { pos: [0.5, 64, 4], target: [0, 0, 0] },
+  interior: { pos: [-8.5, FFE + 1.6, -2.4], target: [-1, FFE + 1.5, 2.4] },
 }
 export const BRYANT_STATIONS: typeof STATIONS = {
-  street: { pos: [7.5, 1.75, 30], target: [0, 4, 0], fov: 46, label: 'Street — front' },
-  'front-left': { pos: [-13, 1.8, 16], target: [0, 3.6, 2], fov: 50, label: 'Front left' },
-  'rear-pool': { pos: [-7, 1.8, -17.5], target: [1, 4, -2], fov: 56, label: 'Rear — pool' },
+  street: { pos: [6, 1.75, 31], target: [0, 4.6, 0], fov: 48, label: 'Street — front' },
+  'front-left': { pos: [-15, 1.8, 17], target: [-2, 4.2, 1], fov: 52, label: 'Front left' },
+  'rear-pool': { pos: [-6, 1.8, -19], target: [0, 4.6, -4], fov: 58, label: 'Rear — pool' },
   aerial: { pos: [22, 32, 32], target: [0, 0, 0], fov: 42, label: 'Drone' },
-  'side-east': { pos: [15, 1.8, -13], target: [4, 3.5, 0], fov: 54, label: 'East side' },
-  'int-great': { pos: [-4, FFE + 1.6, -4], target: [3.4, FFE + 1.5, 1.2], fov: 64, label: 'Great room' },
-  'int-garage': { pos: [5, 1.85, 9.2], target: [12, 1.5, 4.5], fov: 64, label: 'Garage' },
-  'int-bath': { pos: [-9, FFE + 5.6, 4], target: [-11.5, FFE + 4.8, 6.5], fov: 66, label: 'Primary bath' },
-  'elev-front': { pos: [0.5, 5.2, 120], target: [0.5, 5.2, 0], fov: 14, label: 'Front elevation' },
-  'elev-rear': { pos: [0.5, 5.2, -120], target: [0.5, 5.2, 0], fov: 14, label: 'Rear elevation' },
+  'side-east': { pos: [17, 1.8, -12], target: [5, 4.2, -2], fov: 54, label: 'East side' },
+  'int-great': { pos: [-8.5, FFE + 1.6, -2.4], target: [-1, FFE + 1.5, 2.4], fov: 64, label: 'Great room' },
+  'int-garage': { pos: [6, 1.85, 8], target: [12, 1.5, 3], fov: 64, label: 'Garage' },
+  'int-bath': { pos: [-9.8, FFE + 1.6, 4.5], target: [-11.4, FFE + 1.2, 7.2], fov: 66, label: 'Master bath' },
+  'elev-front': { pos: [0, 6.6, 138], target: [0, 6.2, 0], fov: 12.5, label: 'Front elevation' },
+  'elev-rear': { pos: [0, 6.6, -138], target: [0, 6.2, 0], fov: 12.5, label: 'Rear elevation' },
+  'elev-left': { pos: [-138, 6.6, 0.4], target: [0, 6.2, 0], fov: 12.5, label: 'Left elevation' },
+  'elev-right': { pos: [138, 6.6, 0.4], target: [0, 6.2, 0], fov: 12.5, label: 'Right elevation' },
 }
 
 let activeModel = 'demo'
