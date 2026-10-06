@@ -18,6 +18,21 @@ export function DemoOverlay() {
         </div>
         <div className="mt-1 text-3xl font-semibold tracking-[-0.02em] text-white">{c.title}</div>
         <div className="mt-2 text-sm text-white">{c.story}</div>
+        {c.step && (
+          <div className="mt-3 border-t border-white/15 pt-3">
+            <div className="flex items-baseline justify-between gap-3">
+              <span key={c.step.name} className="caption-in truncate text-sm font-medium text-white">{c.step.name}</span>
+              <span className="num shrink-0 text-caption text-white/70">
+                Step {c.step.index} of {c.step.total}
+              </span>
+            </div>
+            <div className="mt-2 flex gap-[3px]" aria-hidden>
+              {Array.from({ length: c.step.total }, (_, i) => (
+                <div key={i} className={`h-1 flex-1 rounded-full ${i < c.step!.index ? 'bg-accent' : 'bg-white/20'}`} />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </>
   )

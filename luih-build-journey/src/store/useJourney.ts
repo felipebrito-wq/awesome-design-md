@@ -25,6 +25,8 @@ export interface DemoCaption {
   code: string
   title: string
   story: string
+  /** Milestone being built right now, so playback reads step by step. */
+  step?: { index: number; total: number; name: string }
 }
 
 interface JourneyState {

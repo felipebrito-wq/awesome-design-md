@@ -8,14 +8,19 @@
  */
 import gsap from 'gsap'
 import { resolvePose } from '@/scene/cameraPresets'
-import { indexProject } from '@/lib/schedule'
+import { indexProject, taskWindow } from '@/lib/schedule'
 import { useJourney } from '@/store/useJourney'
 
 let tl: gsap.core.Timeline | null = null
 let endTimer: ReturnType<typeof setTimeout> | null = null
 
-/** Seconds per construction stage, in order (~26 s total). Extra stages get the last value. */
-const DURATIONS = [3.2, 3.6, 4.6, 4.4, 5.0, 5.2]
+/**
+ * Pacing (seconds). Each stage plays as: camera settles on the stage title →
+ * one build step per milestone (caption names it) → short hold on the result.
+ * Steps share a fixed budget, so every stage takes ~12 s however many milestones
+ * it has and a six-stage job runs about 75 s.
+ */
+const PACE = { intro: 1.8, outro: 1.2, stepMax: 3.6, stageBudget: 9 }
 
 /** X-Ray runs during the stage where MEP goes into open walls: an explicit rough-in stage, else the first stage with MEP work. */
 function xrayStageId(stages: { id: string; name: string; milestones: { name: string }[] }[]): string | undefined {
@@ -90,6 +95,8 @@ export function playDemo() {
   s.requestCamera('site', 1.2)
 
   const xrayId = xrayStageId(stages)
+  // Cursor position as the timeline is being built (tweens must only move forward).
+  let at = state.cursor
   tl = gsap.timeline({
     delay: 1.4,
     onUpdate: () => useJourney.setState({ cursor: state.cursor }),
@@ -106,16 +113,32 @@ export function playDemo() {
       }, 3200)
     },
   })
-  stages.forEach((stage, i) => {
-    const dur = DURATIONS[Math.min(i, DURATIONS.length - 1)]
-    const end = idx.stageRange.get(stage.id)![1]
+  stages.forEach((stage) => {
+    const stageEnd = idx.stageRange.get(stage.id)![1]
+    // Milestones in the order they finish; empty ones are skipped. A stage without any still plays as one step.
+    const steps = stage.milestones
+      .map((m) => ({ name: m.name, end: Math.max(...m.tasks.map((t) => taskWindow(t, idx.today)[1])) }))
+      .filter((m) => Number.isFinite(m.end))
+      .sort((a, b) => a.end - b.end)
+    if (!steps.length) steps.push({ name: stage.name, end: stageEnd })
+    // Each step builds for ~75% of its slot and holds the result for the rest.
+    const slot = Math.min(PACE.stepMax, PACE.stageBudget / steps.length)
+    const base = { code: stage.code, title: stage.name, story: stage.story }
     tl!.call(() => {
       const st = useJourney.getState()
-      st.setDemo({ caption: { code: stage.code, title: stage.name, story: stage.story } })
-      st.requestCamera(camera(stage.cameraPreset), dur * 1.05)
+      st.setDemo({ caption: base })
+      st.requestCamera(camera(stage.cameraPreset), PACE.intro + 0.6)
       st.setXray(stage.id === xrayId)
     })
-    tl!.to(state, { cursor: Math.max(end, state.cursor), duration: dur, ease: 'sine.inOut' })
+    tl!.to({}, { duration: PACE.intro })
+    steps.forEach((m, i) => {
+      tl!.call(() => useJourney.getState().setDemo({ caption: { ...base, step: { index: i + 1, total: steps.length, name: m.name } } }))
+      at = Math.max(Math.min(m.end, stageEnd), at)
+      tl!.to(state, { cursor: at, duration: slot * 0.75, ease: 'sine.inOut' })
+      tl!.to({}, { duration: slot * 0.25 })
+    })
+    if (stageEnd > at) tl!.to(state, { cursor: (at = stageEnd), duration: 0.4, ease: 'sine.out' })
+    tl!.to({}, { duration: PACE.outro })
   })
   tl.call(() => useJourney.getState().setXray(false), [], '-=1.4')
 }
