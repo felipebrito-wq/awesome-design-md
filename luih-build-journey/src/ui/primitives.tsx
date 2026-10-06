@@ -33,14 +33,25 @@ export function Chip({ children, tone = 'neutral' }: { children: ReactNode; tone
   return <span className={cx('inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap', t)}>{children}</span>
 }
 
-/** Status of a stage at a progress value — one map, used by every surface. */
-export function stageStatus(p: number): { label: string; tone: ChipTone } {
-  if (p >= 0.999) return { label: 'Complete', tone: 'ok' }
+/**
+ * Status of a stage — one map, used by every surface. `reported` is Buildertrend's
+ * progress as of today; a cursor-date value above it is only a schedule forecast and is
+ * never shown as "Complete".
+ */
+export function stageStatus(p: number, reported = p): { label: string; tone: ChipTone } {
+  if (reported >= 0.999) return { label: 'Complete', tone: 'ok' }
+  if (p >= 0.999) return { label: 'Scheduled to complete', tone: 'info' }
   if (p > 0) return { label: 'In progress', tone: 'info' }
   return { label: 'Upcoming', tone: 'neutral' }
 }
 
-export function StatusIcon({ progress, blocked = false, size = 16 }: { progress: number; blocked?: boolean; size?: number }) {
+export function StatusIcon({ progress, blocked = false, size = 16, forecast = false }: { progress: number; blocked?: boolean; size?: number; forecast?: boolean }) {
+  if (progress >= 0.999 && forecast)
+    return (
+      <span className="inline-flex shrink-0 items-center justify-center rounded-full border border-dashed border-info text-info" style={{ width: size, height: size }} title="Scheduled — not yet reported complete" aria-label="Scheduled">
+        <Check size={size * 0.55} strokeWidth={2.5} />
+      </span>
+    )
   if (progress >= 0.999)
     return (
       <span className="inline-flex shrink-0 items-center justify-center rounded-full bg-accent text-white" style={{ width: size, height: size }}>

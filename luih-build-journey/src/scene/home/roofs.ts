@@ -105,6 +105,15 @@ export function gableRoofGeometry(x0: number, x1: number, zFront: number, zBack:
   return { roof, end }
 }
 
+/** Replace any NaN normal (degenerate input) with +Y so lighting and post-processing stay finite. */
+export function sanitizeNormals(g: THREE.BufferGeometry): THREE.BufferGeometry {
+  const n = g.getAttribute('normal') as THREE.BufferAttribute | undefined
+  if (!n) return g
+  for (let i = 0; i < n.count; i++) if (!Number.isFinite(n.getX(i)) || !Number.isFinite(n.getY(i)) || !Number.isFinite(n.getZ(i))) n.setXYZ(i, 0, 1, 0)
+  n.needsUpdate = true
+  return g
+}
+
 export function mergeGeometries(list: THREE.BufferGeometry[]): THREE.BufferGeometry {
   const pos: number[] = []
   const uv: number[] = []
@@ -117,7 +126,7 @@ export function mergeGeometries(list: THREE.BufferGeometry[]): THREE.BufferGeome
   out.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3))
   out.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2))
   out.computeVertexNormals()
-  return out
+  return sanitizeNormals(out)
 }
 
 /** Common + jack + hip rafters and ridge for a hip roof (wall line, no tails). */
@@ -181,4 +190,87 @@ export function seamTexture(base = '#1d2124', seam = '#3a4046'): THREE.CanvasTex
   t.colorSpace = THREE.SRGBColorSpace
   t.anisotropy = 8
   return t
+}
+
+/** Single-slope (shed) roof over a wall-line rectangle, high side toward `high` (-z / +z / -x / +x). */
+export function shedRoofGeometry(r: HipRect, high: 'z0' | 'z1' | 'x0' | 'x1', seam = 0.45, lift = 0): THREE.BufferGeometry {
+  const o = r.overhang
+  const x0 = r.x0 - (high === 'x0' ? 0 : o)
+  const x1 = r.x1 + (high === 'x1' ? 0 : o)
+  const z0 = r.z0 - (high === 'z0' ? 0 : o)
+  const z1 = r.z1 + (high === 'z1' ? 0 : o)
+  const run = high === 'z0' || high === 'z1' ? r.z1 - r.z0 : r.x1 - r.x0
+  const yLow = r.y - o * r.pitch + lift
+  const yHigh = r.y + run * r.pitch + lift
+  const y = (x: number, z: number) => {
+    if (high === 'z0') return yLow + ((z1 - z) / (z1 - z0)) * (yHigh - yLow)
+    if (high === 'z1') return yLow + ((z - z0) / (z1 - z0)) * (yHigh - yLow)
+    if (high === 'x0') return yLow + ((x1 - x) / (x1 - x0)) * (yHigh - yLow)
+    return yLow + ((x - x0) / (x1 - x0)) * (yHigh - yLow)
+  }
+  const P = (x: number, z: number): V3 => [x, y(x, z), z]
+  const pos: number[] = []
+  const uv: number[] = []
+  const along = high === 'z0' || high === 'z1' ? new THREE.Vector3(1, 0, 0) : new THREE.Vector3(0, 0, 1)
+  pushFace(pos, uv, [[P(x0, z1), P(x1, z1), P(x1, z0)], [P(x0, z1), P(x1, z0), P(x0, z0)]], along, P(x0, z0), seam)
+  const g = new THREE.BufferGeometry()
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3))
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2))
+  g.computeVertexNormals()
+  return g
+}
+
+/**
+ * Clip a triangle soup to the half-space `axis {<,>} value` (keeps the side
+ * given by `keep`). Used for lean-to hips that die into a wall.
+ */
+export function clipGeometry(g: THREE.BufferGeometry, axis: 'x' | 'z', value: number, keep: 'lt' | 'gt'): THREE.BufferGeometry {
+  const src = g.index ? g.toNonIndexed() : g
+  const P = src.getAttribute('position')
+  const U = src.getAttribute('uv')
+  const ai = axis === 'x' ? 0 : 2
+  const inside = (v: number[]) => (keep === 'lt' ? v[ai] <= value + 1e-6 : v[ai] >= value - 1e-6)
+  const pos: number[] = []
+  const uv: number[] = []
+  for (let t = 0; t < P.count; t += 3) {
+    const poly: number[][] = []
+    for (let k = 0; k < 3; k++) poly.push([P.getX(t + k), P.getY(t + k), P.getZ(t + k), U.getX(t + k), U.getY(t + k)])
+    const out: number[][] = []
+    for (let k = 0; k < 3; k++) {
+      const a = poly[k]
+      const b = poly[(k + 1) % 3]
+      const ia = inside(a)
+      const ib = inside(b)
+      if (ia) out.push(a)
+      if (ia !== ib) {
+        const s = (value - a[ai]) / (b[ai] - a[ai])
+        out.push(a.map((v, j) => v + (b[j] - v) * s))
+      }
+    }
+    for (let k = 1; k + 1 < out.length; k++) {
+      const [a, b, c] = [out[0], out[k], out[k + 1]]
+      // Skip slivers: zero-area triangles give NaN normals, which post-processing (bloom/AO) smears across the frame
+      const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2]
+      const vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2]
+      const area = Math.hypot(uy * vz - uz * vy, uz * vx - ux * vz, ux * vy - uy * vx)
+      if (area < 1e-6) continue
+      for (const v of [a, b, c]) {
+        pos.push(v[0], v[1], v[2])
+        uv.push(v[3], v[4])
+      }
+    }
+  }
+  const res = new THREE.BufferGeometry()
+  res.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3))
+  res.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2))
+  res.computeVertexNormals()
+  return sanitizeNormals(res)
+}
+
+/** Height of a hip roof surface (wall-line rect, overhang ignored) at (x, z); -Infinity outside the eave footprint. */
+export function hipHeightAt(r: HipRect, x: number, z: number): number {
+  const o = r.overhang
+  if (x < r.x0 - o || x > r.x1 + o || z < r.z0 - o || z > r.z1 + o) return -Infinity
+  const dEdge = Math.min(x - r.x0, r.x1 - x, z - r.z0, r.z1 - z)
+  return r.y + dEdge * r.pitch
 }

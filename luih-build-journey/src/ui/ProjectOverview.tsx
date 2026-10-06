@@ -41,6 +41,12 @@ export function ProjectOverview() {
         })}
       </div>
 
+      {d.isForecast && (
+        <p className="mt-3 flex items-start gap-2 text-caption text-slate-700">
+          <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-sm bg-slate-300" aria-hidden />
+          Slate parts are scheduled, not yet reported complete in Buildertrend.
+        </p>
+      )}
       {!d.isLive && (
         <button onClick={goLive} className="mt-3 text-xs font-medium text-accent-dark hover:underline">
           Back to today ({fmtDay(d.today)}) →

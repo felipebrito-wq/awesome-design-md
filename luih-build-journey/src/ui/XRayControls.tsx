@@ -1,6 +1,7 @@
 import { Eye, EyeOff } from 'lucide-react'
 import { SYSTEMS } from '@/domain/layers'
 import { useJourney } from '@/store/useJourney'
+import { useDerived } from './useDerived'
 import { cx } from './primitives'
 
 /** System toggles. Click name → isolate; eye → show/hide. */
@@ -10,6 +11,8 @@ export function XRayControls() {
   const isolate = useJourney((s) => s.isolate)
   const toggle = useJourney((s) => s.toggleSystem)
   const setIsolate = useJourney((s) => s.setIsolate)
+  const d = useDerived()
+  const schematic = d.project.components.some((c) => !!c.specs?.Routing)
   if (!xray) return null
   return (
     <div className="surface anim-fade-up pointer-events-auto w-[220px] rounded-xl p-2">
@@ -36,7 +39,12 @@ export function XRayControls() {
           </div>
         )
       })}
-      <div className="px-2 pt-2 pb-1 text-[10px] leading-snug text-mute">Click a system to isolate it. Finishes fade to reveal what’s inside the walls.</div>
+      {schematic && (
+        <div className="mx-2 mt-2 rounded-lg border border-line bg-slate-50 px-2.5 py-2 text-caption text-slate-700" role="note">
+          <span className="font-medium text-ink">Schematic routes.</span> No MEP drawings supplied — runs are illustrative; equipment and fixtures follow the plans.
+        </div>
+      )}
+      {!schematic && <div className="px-2 pt-2 pb-1 text-caption text-slate-700">Select a system to isolate it. Finishes fade to show the structure and systems inside the walls.</div>}
     </div>
   )
 }

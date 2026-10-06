@@ -3,7 +3,7 @@ import { useFrame } from '@react-three/fiber'
 import { memo, useLayoutEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { POOL } from './home/houseSpec'
-import { POOL as BRYANT_POOL, X as BX, Z as BZ } from './home/bryant/plan'
+import { POOL as BRYANT_POOL, TREES as BRYANT_TREES, X as BX, Z as BZ } from './home/bryant/plan'
 import { useJourney } from '@/store/useJourney'
 import { applyFocusFade, FOCUS_NEAR } from './focusFade'
 
@@ -98,7 +98,7 @@ const SiteImpl = memo(function SiteImpl({ variant, context }: { variant: 'lake' 
     const tampa = variant === 'tampa'
     // Tampa: retained grand oaks from the A-1 site plan (32" front-left, 26" right, 20" rear-right, 36" off-site)
     const oakSpots: [number, number, number][] = tampa
-      ? [[BX(-6), BZ(-16), 1.25], [BX(98), BZ(52), 1.1], [BX(96), BZ(100), 1.0], [BX(104), BZ(-8), 1.25], [-52, -36, 1.2], [56, -40, 1.1]]
+      ? [...BRYANT_TREES.map((t) => [BX(t.x), BZ(t.d), 0.55 + t.dbh / 40] as [number, number, number]), [-52, -36, 1.2], [56, -40, 1.1]]
       : [[-22, 24, 1.2], [-6, 31, 1.0], [14, 31, 1.15], [30, 23, 1.1], [-34, 8, 1.3], [33, -6, 1.25], [-30, -20, 1.2], [24, -30, 1.1], [-19, -30, 1.0], [40, 30, 1], [-44, 30, 1.1], [-14, 46, 1.2]]
     const oaks: { p: number[]; s: number[] }[] = []
     const canopies: { p: number[]; s: number[]; c: string }[] = []

@@ -21,7 +21,9 @@ export class MockBuildertrendService implements BuildertrendService {
   private loaded: Promise<void>
 
   constructor() {
-    this.loaded = fetch('private/project.json')
+    // ?project=demo forces the bundled demo house even when a real job is installed (project switching / regression).
+    const want = new URLSearchParams(location.search).get('project')
+    this.loaded = (want === 'demo' ? Promise.resolve(new Response(null, { status: 404 })) : fetch('private/project.json'))
       .then(async (r) => {
         if (!r.ok) return
         const p = (await r.json()) as Project // non-JSON (SPA fallback) throws -> demo

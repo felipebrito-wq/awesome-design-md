@@ -1,4 +1,4 @@
-import { Pause, Play } from 'lucide-react'
+import { Pause, Play, RotateCcw, Square } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { fmtDay, monthShort, toDay, type Day } from '@/lib/dates'
 import { milestoneSnapDays } from '@/lib/schedule'
@@ -13,7 +13,7 @@ import { pct, useDerived } from './useDerived'
  * on the rail moves the cursor (the house builds/unbuilds continuously).
  * Releases snap to the nearest milestone (±5 days).
  */
-export function ConstructionTimeline({ onPlay }: { onPlay: () => void }) {
+export function ConstructionTimeline({ onPlay, onStop, onRestart }: { onPlay: () => void; onStop: () => void; onRestart: () => void }) {
   const d = useDerived()
   const setCursor = useJourney((s) => s.setCursor)
   const setScrubbing = useJourney((s) => s.setScrubbing)
@@ -21,6 +21,7 @@ export function ConstructionTimeline({ onPlay }: { onPlay: () => void }) {
   const selectStage = useJourney((s) => s.selectStage)
   const previewStage = useJourney((s) => s.previewStage)
   const playing = useJourney((s) => s.demo.playing)
+  const paused = useJourney((s) => !!s.demo.paused)
   const scrubbing = useJourney((s) => s.scrubbing)
   const cursorRaw = useJourney((s) => s.cursor)
   const track = useRef<HTMLDivElement>(null)
@@ -69,7 +70,7 @@ export function ConstructionTimeline({ onPlay }: { onPlay: () => void }) {
 
   const onDown = (e: React.PointerEvent) => {
     ;(e.currentTarget as Element).setPointerCapture(e.pointerId)
-    useJourney.getState().setDemo({ playing: false, caption: null })
+    onStop()
     setScrubbing(true)
     setCursor(dayFromEvent(e.clientX))
   }
@@ -90,16 +91,19 @@ export function ConstructionTimeline({ onPlay }: { onPlay: () => void }) {
   // Keyboard: ← / → step through milestones (global, as before)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if ((e.target as HTMLElement)?.closest('input,textarea,select')) return
+      if (e.target instanceof Element && e.target.closest('input,textarea,select,[contenteditable]')) return
       if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return
       const cur = useJourney.getState().cursor
       const days = [...new Set([...snaps.map((s) => s.day), d.today])].sort((a, b) => a - b)
       const next = e.key === 'ArrowRight' ? days.find((x) => x > cur + 0.5) : [...days].reverse().find((x) => x < cur - 0.5)
-      if (next !== undefined) animateCursorTo(next, 0.7)
+      if (next !== undefined) {
+        onStop()
+        animateCursorTo(next, 0.7)
+      }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [snaps, d.today, animateCursorTo])
+  }, [snaps, d.today, animateCursorTo, onStop])
 
   const curX = toX(cursorRaw)
   const todayX = toX(d.today)
@@ -118,12 +122,22 @@ export function ConstructionTimeline({ onPlay }: { onPlay: () => void }) {
             'inline-flex h-9 shrink-0 items-center gap-2 rounded-lg px-3 text-sm font-medium transition-colors max-md:px-2.5',
             playing ? 'bg-ink text-white hover:bg-ink/90' : 'bg-accent text-white hover:bg-accent-dark',
           )}
-          aria-label={playing ? 'Stop journey (P)' : 'Play journey (P)'}
-          title={playing ? 'Stop (P)' : 'Play the build journey (P)'}
+          aria-label={!playing ? 'Play journey (P)' : paused ? 'Resume journey (P)' : 'Pause journey (P)'}
+          title={!playing ? 'Play the build journey (P)' : paused ? 'Resume (P)' : 'Pause (P)'}
         >
-          {playing ? <Pause size={16} /> : <Play size={16} />}
-          <span className="max-md:hidden">{playing ? 'Stop' : 'Play journey'}</span>
+          {playing && !paused ? <Pause size={16} /> : <Play size={16} />}
+          <span className="max-md:hidden">{!playing ? 'Play journey' : paused ? 'Resume' : 'Pause'}</span>
         </button>
+        {playing && (
+          <div className="flex items-center gap-1">
+            <button onClick={onRestart} className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-700 hover:bg-slate-50 hover:text-ink" title="Restart" aria-label="Restart journey">
+              <RotateCcw size={16} />
+            </button>
+            <button onClick={onStop} className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-700 hover:bg-slate-50 hover:text-ink" title="Stop (Esc)" aria-label="Stop journey">
+              <Square size={14} />
+            </button>
+          </div>
+        )}
         <div className="flex min-w-0 items-center gap-2">
           <span className="text-sm font-semibold whitespace-nowrap text-ink">{fmtDay(d.cursor, { year: true })}</span>
           <Chip tone={when.tone}>{when.label}</Chip>
@@ -144,7 +158,10 @@ export function ConstructionTimeline({ onPlay }: { onPlay: () => void }) {
             return (
               <button
                 key={stage.id}
-                onClick={() => selectStage(stage.id)}
+                onClick={() => {
+                  onStop()
+                  selectStage(stage.id)
+                }}
                 onMouseEnter={() => previewStage(stage.id)}
                 onMouseLeave={() => previewStage(null)}
                 onFocus={() => previewStage(stage.id)}

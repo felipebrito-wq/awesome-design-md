@@ -47,7 +47,9 @@ interface JourneyState {
   compareSourceId: string | null
   panelOpen: boolean
   gallery: { open: boolean; photoId?: string; stageId?: string }
-  demo: { playing: boolean; caption: DemoCaption | null }
+  demo: { playing: boolean; paused?: boolean; caption: DemoCaption | null }
+  /** Transient LUIH OS toast (bottom-right). */
+  notice: { kind: 'info' | 'error' | 'success'; title: string; body?: string } | null
   feed: Notice[]
   toasts: Notice[]
   celebration: Notice | null
@@ -74,6 +76,7 @@ interface JourneyState {
   openGallery(opts?: { photoId?: string; stageId?: string }): void
   closeGallery(): void
   setDemo(d: Partial<JourneyState['demo']>): void
+  notify(n: JourneyState['notice']): void
   dispatch(e: BuildEvent): void
   simulateSync(): Promise<void>
   addSitePhoto(): Promise<void>
@@ -108,7 +111,8 @@ export const useJourney = create<JourneyState>((set, get) => ({
   compareSourceId: null,
   panelOpen: typeof window === 'undefined' || window.innerWidth >= 768, // phones open details on demand
   gallery: { open: false },
-  demo: { playing: false, caption: null },
+  demo: { playing: false, paused: false, caption: null },
+  notice: null,
   feed: [],
   toasts: [],
   celebration: null,
@@ -120,6 +124,7 @@ export const useJourney = create<JourneyState>((set, get) => ({
   async load() {
     if (loading) return
     loading = true
+    set({ error: undefined })
     try {
       const project = await service.getProject('luih-wpm-014')
       const idx = indexProject(project)
@@ -127,7 +132,8 @@ export const useJourney = create<JourneyState>((set, get) => ({
       set({ project, cursor: idx.today })
       channel.subscribe((e) => get().dispatch(e))
     } catch (err) {
-      set({ error: String(err) })
+      loading = false
+      set({ error: err instanceof Error ? err.message : String(err) })
     }
   },
 
@@ -184,6 +190,7 @@ export const useJourney = create<JourneyState>((set, get) => ({
   openGallery: (opts = {}) => set({ gallery: { open: true, ...opts } }),
   closeGallery: () => set({ gallery: { open: false } }),
   setDemo: (d) => set({ demo: { ...get().demo, ...d } }),
+  notify: (n) => set({ notice: n }),
 
   dispatch(e) {
     const p = get().project

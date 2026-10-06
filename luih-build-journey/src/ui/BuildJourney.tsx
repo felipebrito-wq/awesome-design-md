@@ -3,7 +3,8 @@ import { lazy, Suspense, useEffect, useState } from 'react'
 import { useJourney } from '@/store/useJourney'
 import { ConstructionTimeline } from './ConstructionTimeline'
 import { DemoOverlay } from './DemoOverlay'
-import { playDemo, stopDemo } from './demo'
+import { restartDemo, stopDemo, togglePlay as toggleDemo } from './demo'
+import { Notice } from './Notice'
 import { DevPanel } from './DevPanel'
 import { Celebration, EventFeed } from './EventFeed'
 import { ExplorerPanel } from './ExplorerPanel'
@@ -19,6 +20,27 @@ const ConstructionScene = lazy(() => import('@/scene/ConstructionScene').then((m
 
 /** Top-level experience: the house is the interface; chrome floats around it. */
 export function BuildJourney() {
+  const hasSchedule = useJourney((s) => (s.project?.phases.find((ph) => ph.key === 'construction')?.stages ?? []).some((st) => st.milestones.some((m) => m.tasks.length)))
+  if (!hasSchedule) return <EmptySchedule />
+  return <Journey />
+}
+
+/** Useful state instead of a crash when a project has no construction schedule yet. */
+function EmptySchedule() {
+  const project = useJourney((s) => s.project)
+  return (
+    <div className="fixed inset-0 flex items-center justify-center bg-paper p-4">
+      <div className="surface w-full max-w-md rounded-xl p-6">
+        <img src="brand/luih_logo_dark.png" alt="LUIH" className="h-5 w-auto" />
+        <h1 className="mt-4 text-xl font-semibold text-ink">{project?.name ?? 'Project'}</h1>
+        <p className="mt-1 text-sm text-slate-700">No construction schedule has synced from Buildertrend yet, so there’s nothing to build in 3D.</p>
+        <p className="mt-3 text-caption text-slate-700">Once the job’s stages and tasks are scheduled, the Build Journey fills in automatically.</p>
+      </div>
+    </div>
+  )
+}
+
+function Journey() {
   const view = useJourney((s) => s.view)
   const playing = useJourney((s) => s.demo.playing)
   const panelOpen = useJourney((s) => s.panelOpen)
@@ -37,7 +59,6 @@ export function BuildJourney() {
 
   useKeyboard()
 
-  const togglePlay = () => (useJourney.getState().demo.playing ? stopDemo() : playDemo())
   const panelVisible = panelOpen && !playing && view === 'model'
 
   return (
@@ -70,10 +91,11 @@ export function BuildJourney() {
 
         {/* Bottom dock: the time machine */}
         <div className={cx('surface pointer-events-auto absolute bottom-4 left-4 rounded-xl px-4 pt-3 pb-2 transition-all duration-500 max-md:right-2 max-md:bottom-[max(8px,env(safe-area-inset-bottom))] max-md:left-2 max-md:px-3', panelVisible ? 'right-[412px]' : 'right-4')}>
-          <ConstructionTimeline onPlay={togglePlay} />
+          <ConstructionTimeline onPlay={toggleDemo} onStop={stopDemo} onRestart={restartDemo} />
         </div>
 
         <DemoOverlay />
+        <Notice />
         <EventFeed />
         <Celebration />
         <DevPanel />
@@ -95,11 +117,11 @@ export function BuildJourney() {
 function useKeyboard() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if ((e.target as HTMLElement)?.closest('input,textarea,select')) return
+      if (e.target instanceof Element && e.target.closest('input,textarea,select,[contenteditable]')) return
       if (e.metaKey || e.ctrlKey || e.altKey) return
       const s = useJourney.getState()
       if (e.key === 'x' || e.key === 'X') s.setXray(!s.xray)
-      else if (e.key === 'p' || e.key === 'P') (s.demo.playing ? stopDemo : playDemo)()
+      else if (e.key === 'p' || e.key === 'P') toggleDemo()
       else if (e.key === '`') s.setDevOpen(!s.devOpen)
       else if (e.key === 'r' || e.key === 'R') s.requestCamera('overview', 0.9)
       else if (e.key === 'f' || e.key === 'F') document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen()
@@ -111,7 +133,10 @@ function useKeyboard() {
         const p = s.project
         const stages = p?.phases.find((ph) => ph.key === 'construction')?.stages ?? []
         const st = stages[+e.key - 1]
-        if (st) s.selectStage(st.id)
+        if (st) {
+          stopDemo()
+          s.selectStage(st.id)
+        }
       }
     }
     window.addEventListener('keydown', onKey)

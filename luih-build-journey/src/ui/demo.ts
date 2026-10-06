@@ -1,12 +1,18 @@
 /**
- * ▶ Play Build Journey — ~27 s cinematic: empty lot → completed home.
- * Drives the same timeline cursor + camera presets the user controls.
+ * ▶ Play Build Journey — cinematic from the empty lot to the completed home.
+ * Driven by the selected project's own construction stages, dates and camera
+ * presets (no hardcoded stage ids), so real Buildertrend jobs play the same way.
+ *
+ * Controls: play · pause/resume · restart · stop. Any manual timeline or stage
+ * interaction stops playback and hands control back to the user.
  */
 import gsap from 'gsap'
+import { resolvePose } from '@/scene/cameraPresets'
 import { indexProject } from '@/lib/schedule'
 import { useJourney } from '@/store/useJourney'
 
 let tl: gsap.core.Timeline | null = null
+let endTimer: ReturnType<typeof setTimeout> | null = null
 
 /** Seconds per construction stage, in order (~26 s total). Extra stages get the last value. */
 const DURATIONS = [3.2, 3.6, 4.6, 4.4, 5.0, 5.2]
@@ -17,15 +23,49 @@ function xrayStageId(stages: { id: string; name: string; milestones: { name: str
   return (rough ?? stages.find((s) => s.milestones.some((m) => /\bMEP\b|rough/i.test(m.name))))?.id
 }
 
+/** Camera preset with a safe fallback when a project names one this model doesn't define. */
+const camera = (key: string | undefined) => (key && resolvePose(key) ? key : 'overview')
+
+function clearEnd() {
+  if (endTimer) clearTimeout(endTimer)
+  endTimer = null
+}
+
 export function stopDemo() {
   tl?.kill()
   tl = null
+  clearEnd()
   const s = useJourney.getState()
   if (s.demo.playing) {
-    s.setDemo({ playing: false, caption: null })
+    s.setDemo({ playing: false, paused: false, caption: null })
     s.setXray(false)
     s.setPanelOpen(true)
   }
+}
+
+export function pauseDemo() {
+  if (!tl || !useJourney.getState().demo.playing) return
+  tl.pause()
+  useJourney.getState().setDemo({ paused: true })
+}
+
+export function resumeDemo() {
+  if (!tl) return
+  tl.resume()
+  useJourney.getState().setDemo({ paused: false })
+}
+
+/** P / play button: start, or toggle pause while playing. */
+export function togglePlay() {
+  const d = useJourney.getState().demo
+  if (!d.playing) playDemo()
+  else if (d.paused) resumeDemo()
+  else pauseDemo()
+}
+
+export function restartDemo() {
+  stopDemo()
+  playDemo()
 }
 
 export function playDemo() {
@@ -34,39 +74,48 @@ export function playDemo() {
   if (!p) return
   stopDemo()
   const idx = indexProject(p)
+  // Only stages with real dates can be played; a project without any shows a useful notice instead.
+  const stages = idx.stages.filter((st) => {
+    const r = idx.stageRange.get(st.id)
+    return r && Number.isFinite(r[0]) && Number.isFinite(r[1])
+  })
+  if (!stages.length) {
+    s.notify({ kind: 'info', title: 'Nothing to play yet', body: 'This project has no dated construction stages in Buildertrend.' })
+    return
+  }
   const state = { cursor: idx.start - 1 }
   useJourney.setState({ view: 'model', selectedComponentId: null, focusStageId: null, xray: false, isolate: null, gallery: { open: false } })
-  s.setDemo({ playing: true, caption: { code: '00', title: 'Empty Lot', story: `${p.address} — where it begins.` } })
+  s.setDemo({ playing: true, paused: false, caption: { code: '00', title: 'Empty Lot', story: `${p.address} — where it begins.` } })
   s.setCursor(state.cursor)
   s.requestCamera('site', 1.2)
 
+  const xrayId = xrayStageId(stages)
   tl = gsap.timeline({
     delay: 1.4,
     onUpdate: () => useJourney.setState({ cursor: state.cursor }),
     onComplete: () => {
       useJourney.getState().setDemo({ caption: { code: '', title: 'Welcome home.', story: `${p.name} · ${p.model}` } })
-      setTimeout(() => {
+      endTimer = setTimeout(() => {
         const st = useJourney.getState()
         if (st.demo.playing) {
-          st.setDemo({ playing: false, caption: null })
+          tl = null
+          st.setDemo({ playing: false, paused: false, caption: null })
+          st.setXray(false)
           st.setPanelOpen(true)
         }
       }, 3200)
     },
   })
-  // Driven by the project's own construction stages, so real Buildertrend jobs
-  // (whose stage ids differ from the demo house) play the same journey.
-  const xrayId = xrayStageId(idx.stages)
-  idx.stages.forEach((stage, i) => {
+  stages.forEach((stage, i) => {
     const dur = DURATIONS[Math.min(i, DURATIONS.length - 1)]
     const end = idx.stageRange.get(stage.id)![1]
     tl!.call(() => {
       const st = useJourney.getState()
       st.setDemo({ caption: { code: stage.code, title: stage.name, story: stage.story } })
-      st.requestCamera(stage.cameraPreset, dur * 1.05)
+      st.requestCamera(camera(stage.cameraPreset), dur * 1.05)
       st.setXray(stage.id === xrayId)
     })
-    tl!.to(state, { cursor: end, duration: dur, ease: 'sine.inOut' })
+    tl!.to(state, { cursor: Math.max(end, state.cursor), duration: dur, ease: 'sine.inOut' })
   })
   tl.call(() => useJourney.getState().setXray(false), [], '-=1.4')
 }

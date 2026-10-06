@@ -2,7 +2,7 @@ import { AlertTriangle, Check, ChevronDown, FileText, Phone } from 'lucide-react
 import { useState, type ReactNode } from 'react'
 import type { Inspection, Milestone, Stage, Task } from '@/domain/types'
 import { fmtDay, toDay } from '@/lib/dates'
-import { disciplineBreakdown, forecastEnd, milestoneProgress, taskProgressAt } from '@/lib/schedule'
+import { disciplineBreakdown, forecastEnd, milestoneProgress, stageProgress as stageProgressAt, taskProgressAt } from '@/lib/schedule'
 import { ev } from '@/services/realtime/events'
 import { useJourney } from '@/store/useJourney'
 import { Chip, cx, ProgressBar, progressTone, stageStatus, StatusIcon } from './primitives'
@@ -54,7 +54,8 @@ export function StagePanel({ stage }: { stage: Stage }) {
   const p = d.stageProgress.get(stage.id) ?? 0
   const range = d.idx.stageRange.get(stage.id)!
   const breakdown = disciplineBreakdown(stage, d.cursor, d.today)
-  const st = stageStatus(p)
+  const reported = stageProgressAt(stage, d.today, d.today)
+  const st = stageStatus(p, reported)
   const photos = d.project.photos.filter((ph) => ph.stageId === stage.id && toDay(ph.date) <= d.today)
 
   return (
@@ -141,15 +142,17 @@ function Milestones({ stage }: { stage: Stage }) {
         .filter((m) => m.homeownerVisible)
         .map((m: Milestone) => {
           const p = milestoneProgress(m, d.cursor, d.today)
+          const reported = milestoneProgress(m, d.today, d.today)
+          const forecast = p >= 0.999 && reported < 0.999
           const end = Math.max(...m.tasks.map((t) => (t.actualEnd ? toDay(t.actualEnd) : forecastEnd(t))))
           return (
             <div key={m.id} className="border-b border-line last:border-0">
               <button className="flex w-full items-center gap-3 py-3 text-left" onClick={() => setOpen(open === m.id ? null : m.id)}>
-                <StatusIcon progress={p} />
+                <StatusIcon progress={p} forecast={forecast} />
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm font-medium">{m.name}</div>
                   <div className="text-xs text-mute">
-                    {p >= 0.999 ? 'Completed' : p > 0 ? 'In progress · target' : 'Planned'} {fmtDay(end)}
+                    {reported >= 0.999 ? 'Completed' : forecast ? 'Scheduled · not yet reported' : p > 0 ? 'In progress · target' : 'Planned'} {fmtDay(end)}
                   </div>
                 </div>
                 <span className="num text-xs font-medium text-ink">{pct(p)}</span>

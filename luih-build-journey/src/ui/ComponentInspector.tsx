@@ -49,8 +49,23 @@ export function ComponentInspector({ componentId }: { componentId: string }) {
         <span className="num text-xs font-medium text-ink">{pct(live)}</span>
       </div>
       <ProgressBar value={live} className="mt-2.5" h={4} tone={live >= 0.999 ? 'ok' : 'ink'} />
-      {!d.isLive && <div className="mt-1.5 text-xs text-mute">At {fmtDay(d.cursor)}: {pct(atCursor)}</div>}
 
+
+      {comp.specs?.Routing && (
+        <div className="mt-4 rounded-lg border border-line bg-slate-50 px-3 py-2 text-caption text-slate-700" role="note">
+          <span className="font-semibold text-ink">Schematic route.</span> {comp.specs.Routing.replace(/^Schematic — /, '')}
+        </div>
+      )}
+      {comp.specs?.Status?.startsWith('ILLUSTRATIVE') && (
+        <div className="mt-4 rounded-lg border border-line bg-slate-50 px-3 py-2 text-caption text-slate-700" role="note">
+          <span className="font-semibold text-ink">Illustrative.</span> {comp.specs.Status.replace(/^ILLUSTRATIVE — /, '')}
+        </div>
+      )}
+      {!d.isLive && atCursor > live + 0.01 && (
+        <div className="mt-4 rounded-lg border border-info-soft bg-info-soft/50 px-3 py-2 text-caption text-info-ink" role="note">
+          Forecast at {fmtDay(d.cursor)}: {pct(atCursor)} by schedule. Buildertrend reports {pct(live)} as of {fmtDay(d.today)}.
+        </div>
+      )}
       <dl className="mt-5 grid grid-cols-2 gap-x-4 gap-y-4 border-t border-line pt-4">
         <Field label={verb}>{task?.actualEnd ? fmtDay(task.actualEnd) : task ? `Target ${fmtDay(forecastEnd(task))}` : '—'}</Field>
         <Field label="Inspection">{inspection ? <InspectionChip i={inspection} /> : <span className="text-mute">Not required</span>}</Field>
