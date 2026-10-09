@@ -1,0 +1,510 @@
+<title>House Document Control</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Public+Sans:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a drawing-set "title block" header, then numbered sheets (sections) on drafting paper; redline red marks revisions and risks only. */
+:root{
+  --paper:#f6f7f5; --sheet:#ffffff; --ink:#1d2733; --ink-2:#4b5866; --rule:#d5dbe0;
+  --blue:#25507a; --blue-soft:#e6eef6; --red:#b8322a; --red-soft:#fbeceb; --amber:#9a6a00; --amber-soft:#fbf3dd; --green:#2f6b45; --green-soft:#e6f2ea;
+  --f-display:"Archivo","Arial Narrow",Arial,sans-serif; --f-body:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif; --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#12171d; --sheet:#182029; --ink:#e4e9ee; --ink-2:#a6b2bd; --rule:#2c3742;
+  --blue:#8fb7e0; --blue-soft:#1c2c3d; --red:#ef7d74; --red-soft:#3a1f1d; --amber:#e3b54e; --amber-soft:#33290f; --green:#7cc496; --green-soft:#17301f; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#12171d; --sheet:#182029; --ink:#e4e9ee; --ink-2:#a6b2bd; --rule:#2c3742;
+  --blue:#8fb7e0; --blue-soft:#1c2c3d; --red:#ef7d74; --red-soft:#3a1f1d; --amber:#e3b54e; --amber-soft:#33290f; --green:#7cc496; --green-soft:#17301f; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:15.5px;line-height:1.6;padding-inline:16px;padding-block:24px 64px}
+.wrap{max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;line-height:1.15;margin:0}
+h1{font-size:clamp(28px,4.6vw,44px);font-weight:800;letter-spacing:-.01em}
+h2{font-size:clamp(21px,2.8vw,27px);font-weight:700}
+h3{font-size:17px;font-weight:700;margin-top:6px}
+p{margin:0;max-width:72ch}
+a{color:var(--blue)}
+code,.mono{font-family:var(--f-mono);font-size:.86em}
+.label{font-family:var(--f-mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
+/* title block */
+.tb{border:2px solid var(--ink);background:var(--sheet);display:grid;grid-template-columns:1fr auto}
+.tb-main{padding:22px 24px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.tb-side{border-left:2px solid var(--ink);display:grid;grid-template-rows:repeat(4,auto);min-width:210px}
+.tb-side div{padding:9px 14px;border-bottom:1px solid var(--rule);display:flex;flex-direction:column;gap:2px}
+.tb-side div:last-child{border-bottom:0}
+.tb-side b{font-family:var(--f-mono);font-size:13px;font-weight:600}
+@media (max-width:720px){.tb{grid-template-columns:1fr}.tb-side{border-left:0;border-top:2px solid var(--ink);min-width:0;grid-template-columns:1fr 1fr;grid-template-rows:auto}}
+.lede{font-size:17px;color:var(--ink-2)}
+nav.toc{display:flex;flex-wrap:wrap;gap:6px 14px;font-family:var(--f-mono);font-size:12.5px}
+nav.toc a{text-decoration:none;border-bottom:1px dotted var(--blue)}
+/* sheets */
+section.sheet{background:var(--sheet);border:1px solid var(--rule);padding:26px 24px;display:flex;flex-direction:column;gap:16px;min-width:0}
+.sheet-head{display:flex;gap:14px;align-items:baseline;flex-wrap:wrap;border-bottom:2px solid var(--ink);padding-bottom:10px}
+.sheet-no{font-family:var(--f-mono);font-weight:600;font-size:13px;border:1.5px solid var(--ink);padding:2px 8px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+.grid2>*,.grid3>*{min-width:0}
+.box{border:1px solid var(--rule);padding:14px 16px;display:flex;flex-direction:column;gap:8px;background:var(--sheet)}
+.box.red{border-color:var(--red);background:var(--red-soft)}
+.box.blue{border-color:var(--blue);background:var(--blue-soft)}
+.box.green{border-color:var(--green);background:var(--green-soft)}
+ul,ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:5px}
+li{max-width:76ch}
+.stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.stat{border-left:3px solid var(--ink);padding:4px 12px;display:flex;flex-direction:column;gap:2px}
+.stat b{font-family:var(--f-display);font-size:26px;font-variant-numeric:tabular-nums;line-height:1.1}
+.stat span{font-size:13px;color:var(--ink-2)}
+.stat.red{border-color:var(--red)} .stat.red b{color:var(--red)}
+.tbl{overflow-x:auto;border:1px solid var(--rule)}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:640px}
+th,td{text-align:left;vertical-align:top;padding:8px 10px;border-bottom:1px solid var(--rule)}
+th{font-family:var(--f-mono);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);background:var(--paper)}
+tr:last-child td{border-bottom:0}
+.chip{display:inline-block;font-family:var(--f-mono);font-size:11px;font-weight:600;padding:1px 7px;border:1px solid currentColor;white-space:nowrap}
+.c-cheap{color:var(--green)} .c-fast{color:var(--blue)} .c-better{color:var(--amber)} .c-risk{color:var(--red)}
+.quote{border-left:3px solid var(--red);padding:2px 0 2px 12px;font-style:italic;color:var(--ink-2)}
+.src{font-family:var(--f-mono);font-size:11.5px;color:var(--ink-2);font-style:normal}
+.diagram{overflow-x:auto;border:1px dashed var(--rule);padding:12px;background:var(--sheet)}
+pre.mermaid{margin:0;background:transparent;font-size:13px}
+pre.tree{font-family:var(--f-mono);font-size:12.5px;line-height:1.55;margin:0;overflow-x:auto;padding:14px;background:var(--paper);border:1px solid var(--rule)}
+.tree .d{color:var(--blue);font-weight:600} .tree .n{color:var(--ink-2)} .tree .r{color:var(--red)}
+.callout{border:2px solid var(--red);padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.callout .label{color:var(--red)}
+.delta{display:inline-grid;place-items:center;width:20px;height:18px;background:var(--red);color:var(--sheet);font-family:var(--f-mono);font-size:10.5px;font-weight:600;clip-path:polygon(50% 0,100% 100%,0 100%);padding-top:4px;vertical-align:-3px}
+.phase{display:grid;grid-template-columns:120px 1fr;gap:16px;border-top:1px solid var(--rule);padding-top:14px}
+.phase:first-of-type{border-top:0;padding-top:0}
+@media (max-width:640px){.phase{grid-template-columns:1fr;gap:6px}}
+.phase-when{font-family:var(--f-mono);font-size:12.5px;display:flex;flex-direction:column;gap:4px}
+.phase-when b{font-family:var(--f-display);font-size:18px}
+.mock{border:1.5px solid var(--ink);background:var(--paper);font-size:13px;display:flex;flex-direction:column}
+.mock-bar{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:8px 12px;border-bottom:1.5px solid var(--ink);background:var(--sheet)}
+.mock-body{padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.sheet-row{display:grid;grid-template-columns:58px 1fr auto;gap:8px;align-items:center;padding:5px 0;border-bottom:1px dotted var(--rule)}
+.sheet-row:last-child{border-bottom:0}
+.st{font-family:var(--f-mono);font-size:10.5px;padding:1px 6px;font-weight:600}
+.st.ok{background:var(--green-soft);color:var(--green)} .st.wait{background:var(--amber-soft);color:var(--amber)} .st.new{background:var(--red-soft);color:var(--red)}
+footer{font-size:13px;color:var(--ink-2);display:flex;flex-direction:column;gap:6px}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+</style>
+
+<div class="wrap">
+
+<header class="tb">
+  <div class="tb-main">
+    <span class="label">LUIH · Product · Discovery, process &amp; product plan</span>
+    <h1>House Document Control</h1>
+    <p class="lede">The goal is that everyone, from architecture to the superintendent on site, works from the same current set. This page covers the discovery evidence, as-is and to-be flows for permits and occurrences, a folder standard aligned with BT, a LUIH OS feature concept, the BT and Slack integrations, and the plan for getting the current set to site.</p>
+    <nav class="toc" aria-label="Sheets">
+      <a href="#g0">G-0 Summary</a><a href="#g1">G-1 Evidence</a><a href="#a1">A-1 As-is permit</a><a href="#a2">A-2 As-is occurrence</a><a href="#a3">A-3 To-be flow</a><a href="#a4">A-4 Folder standard</a><a href="#p1">P-1 LUIH OS feature</a><a href="#p2">P-2 Integrations</a><a href="#p3">P-3 Site</a><a href="#p4">P-4 Roadmap</a><a href="#p5">P-5 Decisions</a>
+    </nav>
+  </div>
+  <div class="tb-side">
+    <div><span class="label">Owner</span><b>Felipe Brito · Product</b></div>
+    <div><span class="label">Date</span><b>2026-10-09</b></div>
+    <div><span class="label">Revision</span><b>R00 · Discovery draft</b></div>
+    <div><span class="label">Status</span><b style="color:var(--amber)">For review</b></div>
+  </div>
+</header>
+
+<!-- G-0 -->
+<section class="sheet" id="g0">
+  <div class="sheet-head"><span class="sheet-no">G-0</span><h2>Executive summary</h2></div>
+  <div class="stat-row">
+    <div class="stat red"><b>10+</b><span>field incidents in 4 job channels traced to an outdated or ambiguous document</span></div>
+    <div class="stat"><b>4–5</b><span>manual steps per status change: Drive, BT, ClickUp, Slack, then a repost (estimate from interviews)</span></div>
+    <div class="stat"><b>~35%</b><span>of messages in job channels are document-update posts (estimated from 4 channels)</span></div>
+    <div class="stat red"><b>0</b><span>mechanisms that confirm the field actually received a new revision</span></div>
+  </div>
+  <div class="grid2">
+    <div class="box blue">
+      <span class="label">What we learned</span>
+      <ul>
+        <li>The <b>storage model is sound.</b> Drive holds the full history and BT holds only the latest PDFs. Nobody disputes this split.</li>
+        <li>The <b>failures happen after approval</b>, in four places. People aren't <b>told</b> a revision is coming. Revisions aren't <b>batched</b> per house. There's no single <b>versioned</b> "current set". Changes don't <b>propagate</b> to the related sheets, the Design Book or the field.</li>
+        <li>Every status change is <b>retyped by hand into 4 systems</b>. Luiza put it plainly: <i>"It's more about attention than time"</i>.</li>
+        <li>The folder template exists, but every house has drifted from it: four date formats, R-numbers reused on different dates, and occurrence folders in three different places.</li>
+      </ul>
+    </div>
+    <div class="box">
+      <span class="label">What I recommend</span>
+      <ul>
+        <li><b>Keep Drive as storage and BT as the field's view.</b> Build LUIH OS as the <b>control layer</b> that owns state: sets, sheets, revisions, packages and acknowledgements. Don't build a new file system.</li>
+        <li>Introduce <b>one Set Version per house</b> (V1, V2, …) that the field can say out loud: "we're on V8". Sheets keep their own R-numbers underneath.</li>
+        <li>Replace the copy-paste loop with <b>one "Publish" action</b>. It moves files in Drive, pushes the latest set to BT, updates ClickUp, posts to Slack and queues a print job.</li>
+        <li>Close the loop on site with an <b>acknowledgement plus a QR code on every printed sheet</b>, so anyone can check whether a sheet is still current.</li>
+        <li><b>Sequence matters:</b> Phase 0 (naming and folder standard plus governance, no code) captures roughly 30% of the value in 2 weeks.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="callout">
+    <span class="label">Challenge to the brief</span>
+    <p>The brief frames this as a document-management problem ("better than Google Drive"). The evidence says it's a <b>change-control and propagation problem</b>. Oberlin, Mulbry and Stetson didn't fail because a file couldn't be found. They failed because a change wasn't announced, wasn't propagated, or wasn't acknowledged. If we ship a nicer folder browser without the publish → notify → acknowledge loop, we'll repeat those incidents with better UX.</p>
+  </div>
+</section>
+
+<!-- G-1 -->
+<section class="sheet" id="g1">
+  <div class="sheet-head"><span class="sheet-no">G-1</span><h2>Discovery evidence</h2></div>
+  <p><span class="label">Sources</span> 2 discovery interviews (Ingrid Dourado, Oct 8; Luiza Dias, Oct 8) · Felipe ↔ Senna on blue bags (Oct 8) · Ticket Hub kickoff (Oct 1) · Slack: 4 job channels read in full (#532-langholm-dr, #2308-mulbry-dr, #1135-stetson-st, #3100-oberlin-ave) plus #homebuilding, #permitting_status and #ticket_request · Drive trees for 2308 Mulbry, 2608 Amherst and 1129 Stetson · ClickUp D&amp;P and Ticket lists · <i>Mensagens padrões_R00</i> and <i>Controle | Revisão projetos</i>.</p>
+
+  <h3>Incidents caused by outdated or ambiguous documents</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>House</th><th>What happened</th><th>Root cause</th><th>Gap</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">3100 Oberlin</td><td>The committee changed A-8 (brick) in March, but BT was never updated. Construction built from the old elevation. Brick ran short 3 weeks before closing. The spec book diverged from what was installed in about 15 items, and the CO slipped.</td><td>The change was never published</td><td><span class="chip c-risk">Propagate</span></td></tr>
+      <tr><td class="mono">2308 Mulbry</td><td>The ceiling read 9'-4" on one sheet and 9' on the bearing callouts. Trusses were built to 9', and the framers were pulled off site.</td><td>No cross-sheet consistency check</td><td><span class="chip c-risk">Version</span></td></tr>
+      <tr><td class="mono">2308 Mulbry</td><td>A tile layout appeared only in the OLD Design Book: <i>"seems like we are missing half of the pages from an update"</i> (Oct 6).</td><td>The Design Book was versioned separately from the plans</td><td><span class="chip c-risk">Propagate</span></td></tr>
+      <tr><td class="mono">1135 Stetson</td><td>The house was demolished before approved plans existed. On Oct 5 the team decided to build from a set still in "00. Waiting for City Approval".</td><td>No state for "released before stamp"</td><td><span class="chip c-risk">Version</span></td></tr>
+      <tr><td class="mono">532 Langholm</td><td>A CMU wall was built 8" off and needed a truss engineering letter.</td><td>Unclear (possibly an outdated sheet on site)</td><td><span class="chip c-risk">Acknowledge</span></td></tr>
+      <tr><td class="mono">121 Fawsett</td><td><i>"Sorry for the confusion… I just reverted the project to the previous version in BT"</i> (Oct 8).</td><td>Manual BT edits with no audit trail</td><td><span class="chip c-risk">Version</span></td></tr>
+      <tr><td class="mono">Many (Sep 14)</td><td>BT intentionally showed <b>two</b> electrical sets: the stamped set in Approved and the coordinated set in Construction Documents.</td><td>No model for "construction set ≠ city set"</td><td><span class="chip c-risk">Version</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="grid3">
+    <div class="box"><span class="label">Copy-paste loop</span><p class="quote">"I download it, save it to Drive, save it to BT, then send a message… I can't breathe."</p><span class="src">Luiza · interview</span></div>
+    <div class="box"><span class="label">Push doesn't land</span><p class="quote">"The job channel works when the field pulls. It doesn't work when design pushes."</p><span class="src">Senna · #homebuilding · Aug 14</span></div>
+    <div class="box"><span class="label">Dependencies live in memory</span><p class="quote">"If drainage changes, I know I have to update the landscape plan too… sometimes I forget."</p><span class="src">Ingrid · interview</span></div>
+  </div>
+
+  <h3>Structural facts we have to design around</h3>
+  <ul>
+    <li><b>Exceptions are normal, not edge cases.</b> Construction sometimes builds before the occurrence exists, so the revision is effectively an as-built. Sets get released before the stamp arrives. Revisions get cancelled mid-flow. Not every occurrence goes to the city: some close with an EOR letter instead.</li>
+    <li><b>"Approved" isn't the same as "issued".</b> The city approves, then the fee is validated and paid, then the permit card arrives, then the stamped plans. Luiza only marks the milestone after both the card and the stamped plans are in.</li>
+    <li><b>Ownership is concentrated.</b> Ingrid: <i>"I now manage all occurrences."</i> Luiza owns permit submission. Both are single points of failure.</li>
+    <li><b>The pieces already exist:</b> Ticket Hub (single intake), the D&amp;P Phases 7.3–7.9 in ClickUp (which map 1:1 to folder states), the Specbook versioning in LUIH OS (v1/v2/v3 plus a Slack bot), the Submission Checklist and the Comment Agent, and a sheet-correlation matrix built from Slack (64% of plan revisions are multi-discipline).</li>
+    <li><b>The "D0" label isn't used anywhere</b> in Drive. Versions are a mix of R00–R04, <code>_v1</code>, dated folders and "Rev 4" stamps from the city.</li>
+  </ul>
+</section>
+
+<!-- A-1 -->
+<section class="sheet" id="a1">
+  <div class="sheet-head"><span class="sheet-no">A-1</span><h2>As-is · Permit flow (building permit)</h2></div>
+  <p>Red nodes are the manual steps that copy the same status into another system. Demo, tree, septic, fence and pool permits run in parallel with a simpler Application / Documents / Drawings package. Demo needs to land about 60 days before the building permit, and the tree permit is a prerequisite in Orlando.</p>
+  <div class="diagram"><pre class="mermaid">
+flowchart TD
+  A["Arch / Eng produce set<br/>Drive: 02.PB / 01.Unsigned / by discipline"] --> B["Internal review + PE check"]
+  B --> C["Send to EOR / truss engineer to sign"]
+  C --> D["Drive: 02.Signed / 01.Ready for Submission"]
+  D --> E1["Upload PDFs to BT<br/>00. Waiting for City Approval"]:::manual
+  D --> E2["ClickUp D&P phase 7.3"]:::manual
+  D --> E3["Slack post: PROJECT REVISION @Luiza"]:::manual
+  E1 & E2 & E3 --> F["Luiza submits to city / private provider"]
+  F --> G["Drive: move to 02.Waiting for Approval<br/>ClickUp 7.4 city review"]:::manual
+  G --> H{"City result"}
+  H -- "Comments" --> I["Narrative + comment resolution<br/>Drive 04.Narrative · ClickUp 7.5–7.6"]
+  I --> A
+  H -- "Approved" --> J["ClickUp 7.7 approved – BP pending"]:::manual
+  J --> K["Validate + pay fee → permit card"]
+  K --> L["Stamped plans received by email"]
+  L --> M["Drive: 03.Approved / Received from City<br/>re-organize, old → 00.Old"]:::manual
+  M --> N["BT: clear Waiting, upload Approved,<br/>old → 00.Old · tick BT schedule"]:::manual
+  N --> O["ClickUp 7.9 · Slack PERMIT ISSUED<br/>then teammate re-posts"]:::manual
+  O --> P["Blue bag printed for site"]
+  classDef manual fill:#fbeceb,stroke:#b8322a,color:#1d2733
+  </pre></div>
+</section>
+
+<!-- A-2 -->
+<section class="sheet" id="a2">
+  <div class="sheet-head"><span class="sheet-no">A-2</span><h2>As-is · Occurrence flow (post-permit change)</h2></div>
+  <p>This flow carries more ambiguity: it has many entry points, the decision on whether to go to the city depends on judgment, related sheets are identified from memory, and the field never acknowledges receipt.</p>
+  <div class="diagram"><pre class="mermaid">
+flowchart TD
+  T1["Field asks in job channel"] --> TH
+  T2["Committee / design change"] --> TH
+  T3["Procurement / discontinued item"] --> TH
+  T4["Field already built it differently"]:::risk --> TH
+  TH["Ticket Hub card<br/>Dani / Sabrina triage"] --> IG["Ingrid assesses scope"]
+  IG --> SH["Pick impacted sheets from memory"]:::risk
+  SH --> Q{"Needs city?"}
+  Q -- "No" --> NL["EOR letter or CD update"] --> BT2["BT 02. Construction Documents"]:::manual
+  Q -- "Yes" --> RV["Revise sheets<br/>Drive dated folder in 01.Unsigned"]
+  RV --> SG["EOR signs"] --> RS["Drive Ready for Submission"]
+  RS --> BW["BT: pull sheets out of Approved,<br/>add to 00.Waiting"]:::manual
+  RS --> SL["Slack PROJECT REVISION + CC supers"]:::manual
+  BW & SL --> LZ["Luiza submits"] --> CR{"City"}
+  CR -- "Comments" --> RV
+  CR -- "Approved" --> OR["Ingrid organizes Drive Approved root"]:::manual
+  OR --> BA["BT 01.Approved, old → 00.Old"]:::manual
+  BA --> SA["Slack PROJECT REVISION APPROVED"]:::manual
+  SA --> FX["Field: no acknowledgement,<br/>Design Book not re-synced"]:::risk
+  BT2 --> FX
+  X["Cancelled mid-flow / released before stamp"]:::risk -.-> RV
+  classDef manual fill:#fbeceb,stroke:#b8322a,color:#1d2733
+  classDef risk fill:#fbf3dd,stroke:#9a6a00,color:#1d2733
+  </pre></div>
+</section>
+
+<!-- A-3 -->
+<section class="sheet" id="a3">
+  <div class="sheet-head"><span class="sheet-no">A-3</span><h2>To-be · One "Revision Package" flow for permits and occurrences</h2></div>
+  <p>Permits and occurrences become the same object: a <b>Revision Package</b>, meaning the set of sheets that changes together for one reason. People do the thinking (scope, revise, sign, submit). The system does the filing (folders, BT, ClickUp, Slack, print). Exceptions get explicit states instead of workarounds.</p>
+  <div class="diagram"><pre class="mermaid">
+flowchart TD
+  IN["Trigger: Ticket Hub card<br/>(occurrence, city comments, new permit)"] --> PK["LUIH OS opens Revision Package<br/>linked to ticket ID + house"]
+  PK --> SC["Scope: owner selects sheets<br/>system suggests linked sheets + Design Book pages"]
+  SC --> HU["Auto heads-up in job channel<br/>sheets · reason · ETA · affected trades"]:::auto
+  HU --> UP["Upload revised PDFs once<br/>Submission Checklist validates"]
+  UP --> Q{"Route"}
+  Q -- "City / private provider" --> SG["Sign → Ready → Submitted → Comments loop"]
+  Q -- "Internal only (EOR letter / CD)" --> IA["Internal approval by Ingrid / EOR"]
+  SG --> AP["Approved + stamped"]
+  SG -. "urgent" .-> RB["Released before stamp<br/>(amber flag, auto follow-up)"]
+  IA --> PB
+  AP --> PB
+  RB --> PB
+  PB["PUBLISH (one click)"]:::pub --> S1["Drive: current sheets replaced,<br/>old → Superseded (auto)"]:::auto
+  PB --> S2["BT: latest set only"]:::auto
+  PB --> S3["ClickUp phase + ticket closed"]:::auto
+  PB --> S4["Slack: job channel + #permitting_status<br/>What changed + Acknowledge button"]:::auto
+  PB --> S5["Set Version V(n+1) + print job<br/>with change cover sheet"]:::auto
+  S4 --> AK{"Super / PM acknowledged<br/>within 24h?"}
+  AK -- "Yes" --> DL["Logged: 'On V8' · daily log"]
+  AK -- "No" --> ES["Escalate to construction manager"]
+  CX["Cancel"] -.-> VD["Package voided, nothing published"]
+  classDef auto fill:#e6eef6,stroke:#25507a,color:#1d2733
+  classDef pub fill:#1d2733,stroke:#1d2733,color:#ffffff
+  </pre></div>
+  <div class="grid3">
+    <div class="box"><span class="label">Removed from people</span><ul><li>All folder moves in Drive and BT</li><li>Retyping status into ClickUp and Slack</li><li>Remembering which sheets are linked</li></ul></div>
+    <div class="box"><span class="label">Kept with people</span><ul><li>Scope and judgment on whether to go to the city</li><li>Design, signatures and submission</li><li>The single "Publish" decision</li></ul></div>
+    <div class="box"><span class="label">New</span><ul><li>Heads-up before work starts</li><li>Set Version per house</li><li>Acknowledgement and escalation</li><li>Explicit exception states</li></ul></div>
+  </div>
+  <p><b>Governance rule this flow needs:</b> <i>the plan set is the authoritative document.</i> A Design Book or spec book change that touches layout must open or attach to a Revision Package. Today 10 of 11 Design Book layout changes had no follow-up plan revision. That's a policy decision for leadership, not a feature.</p>
+</section>
+
+<!-- A-4 -->
+<section class="sheet" id="a4">
+  <div class="sheet-head"><span class="sheet-no">A-4</span><h2>Folder standard · Drive mirrors the BT template; BT gets only the latest</h2></div>
+  <p>Rule: <b>folders 00–04 have the same number and name in Drive and BT.</b> Drive-only folders start at 05, so nobody has to translate between the two systems. BT holds only the current PDFs. Drive also holds the history and the working files. Once Phase 2 is live, <b>people stop moving files by hand</b>; LUIH OS does it.</p>
+  <div class="grid2">
+    <div>
+      <span class="label">Google Drive · full record</span>
+<pre class="tree"><span class="d">03. Ongoing Projects/2308 MULBRY DR/</span>
+ 01. Survey · 02. Committee · 05. Selections · 07. Specbook  <span class="n">(unchanged)</span>
+ <span class="d">03. Plans/</span>
+  <span class="d">00. Waiting for City Approval/</span>   <span class="n">= BT 00 · current pending sheets</span>
+  <span class="d">01. Approved/</span>                     <span class="n">= BT 01 · flat, 1 PDF per sheet, current only</span>
+     A-6_2308MULBRY_R04_2026-10-08.pdf
+  <span class="d">02. Construction Documents/</span>      <span class="n">= BT 02 · LV, coordinated sets</span>
+  <span class="d">03. Surveys &amp; Site/</span>              <span class="n">= BT 03 · </span><span class="r">confirm BT name</span>
+  <span class="d">04. Permits &amp; Documents/</span>         <span class="n">= BT 04</span>
+     Building · Demo · Tree · Septic · Fence · Pool · Retaining Wall · Sidewalk
+       └ 01. Application · 02. Documents · 03. Drawings · 04. Issued (card)
+  <span class="d">05. Packages/</span>                     <span class="n">Drive only · immutable history</span>
+     PKG-07_2026-09-16_OCC-868k23qx8_Drainage/
+       01. Unsigned · 02. Signed · 03. City Comments · 04. Approved · manifest.json
+  <span class="d">06. Working/</span>                      <span class="n">Drive only · never published</span>
+     01. Design Development (DWG, SKP, studies) · 02. Interior Design · 03. Engineering Studies
+  <span class="d">99. Superseded/</span>                   <span class="n">Drive only · auto-filled at Publish</span></pre>
+    </div>
+    <div>
+      <span class="label">Buildertrend · field view (latest only)</span>
+<pre class="tree"><span class="d">Job: 2308 Mulbry Dr / Documents</span>
+  <span class="d">00. Waiting for City Approval/</span>   <span class="n">only if released before stamp, amber</span>
+  <span class="d">01. Approved/</span>                     <span class="n">current set, one PDF per sheet</span>
+     _CURRENT SET — V8 — 2026-10-08.pdf  <span class="n">(merged set + change cover)</span>
+     A-1 … A-13 · S-1 … S-7 · L-1 · E-1 …
+  <span class="d">02. Construction Documents/</span>
+  <span class="d">03. Surveys &amp; Site/</span>
+  <span class="d">04. Permits &amp; Documents/</span>
+     Permit cards · NOC · issued permits only
+
+<span class="n">Not in BT: 00.Old folders, DWG/SKP, narratives, studies.
+Rule kept from field request: the change cover
+sheet lists the sheets that changed in this version.</span></pre>
+      <div class="box" style="margin-top:12px">
+        <span class="label">Naming standard</span>
+        <ul>
+          <li>Sheet file: <code>&lt;SHEET&gt;_&lt;HOUSE&gt;_R&lt;nn&gt;_&lt;YYYY-MM-DD&gt;.pdf</code></li>
+          <li>Package: <code>PKG-&lt;nn&gt;_&lt;YYYY-MM-DD&gt;_&lt;TRIGGER&gt;_&lt;scope&gt;</code>, where TRIGGER is <code>PERMIT</code>, <code>CITY-Cn</code> or <code>OCC-&lt;ClickUp id&gt;</code></li>
+          <li>Set version: <code>V&lt;n&gt;</code> per house, incremented on every Publish</li>
+          <li>ISO dates only. This removes <code>abr.07</code>, <code>Sept.17</code>, <code>Aug.31.026</code> and <code>Sep.08.2029</code> in one rule.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <p><b>Choice I made, open to challenge:</b> Approved stays <b>flat and current</b> (Amherst style), and the history moves into <b>immutable packages</b>. Mulbry keeps dated approved snapshots instead, which forces the field to work out which snapshot is current. Packages preserve the same history without that ambiguity.</p>
+</section>
+
+<!-- P-1 -->
+<section class="sheet" id="p1">
+  <div class="sheet-head"><span class="sheet-no">P-1</span><h2>LUIH OS feature · "Plan Room"</h2></div>
+  <p>Plan Room is a module per house inside LUIH OS. It follows the principle already in the architecture doc: <i>"Platform owns state, ClickUp owns workflow."</i> Files stay in Drive. LUIH OS owns which file is current, why it changed, and who has seen it.</p>
+  <div class="grid2">
+    <div class="mock" aria-label="Plan Room mock, ops view">
+      <div class="mock-bar"><b>2308 Mulbry Dr · Plan Room</b><span class="mono">Set <b>V8</b> · 2026-10-08</span></div>
+      <div class="mock-body">
+        <span class="label">Current set · 38 sheets</span>
+        <div class="sheet-row"><span class="mono">A-6</span><span>Second floor plan <span class="delta">4</span></span><span class="st new">CHANGED V8</span></div>
+        <div class="sheet-row"><span class="mono">L-1</span><span>Landscape plan <span class="delta">2</span></span><span class="st new">CHANGED V8</span></div>
+        <div class="sheet-row"><span class="mono">C-1</span><span>Civil site plan</span><span class="st wait">AT CITY · PKG-08</span></div>
+        <div class="sheet-row"><span class="mono">S-3</span><span>Framing plan</span><span class="st ok">STAMPED</span></div>
+        <span class="label" style="margin-top:6px">Packages</span>
+        <div class="sheet-row"><span class="mono">PKG-08</span><span>Drainage · OCC-868k23qx8 · C-1, L-1</span><span class="st wait">SUBMITTED</span></div>
+        <div class="sheet-row"><span class="mono">PKG-07</span><span>Façade detailing · A-6, A-8</span><span class="st ok">PUBLISHED</span></div>
+        <span class="label" style="margin-top:6px">V8 acknowledgements</span>
+        <div class="sheet-row"><span class="mono">Mike L.</span><span>Superintendent</span><span class="st ok">ACK 09:12</span></div>
+        <div class="sheet-row"><span class="mono">Jordan P.</span><span>PM</span><span class="st new">PENDING 6h</span></div>
+      </div>
+    </div>
+    <div class="box">
+      <span class="label">Why this beats Drive for Ops <span class="chip c-better">Better</span></span>
+      <ul>
+        <li><b>A sheet register, not folders.</b> One row per sheet with its current revision and status. "What's the latest?" becomes a glance instead of a search.</li>
+        <li><b>Upload once.</b> Drag the PDFs into a package and the system names, files, mirrors and announces them.</li>
+        <li><b>Linked-sheet prompt.</b> Change C-1 and Plan Room asks: "L-1 and A-2 changed together in 9 of 10 past drainage revisions. Include them?" This uses the matrix built from Slack.</li>
+        <li><b>Package timeline.</b> A kanban view (Draft → Signing → Ready → At city → Approved → Published) that reads and writes ClickUp D&amp;P phases 7.3–7.9.</li>
+        <li><b>Visible exceptions.</b> Released-before-stamp, as-built and cancelled are real states with owners and due dates.</li>
+        <li><b>Audit trail.</b> Who published what, when and why. That ends the silent BT reverts.</li>
+      </ul>
+    </div>
+  </div>
+  <h3>Data model (v1)</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Entity</th><th>Key fields</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">House</td><td>address, city, permit #, BT job id, Drive folder id, Slack channel id</td><td>Already exists in LUIH OS. Add the three external ids.</td></tr>
+      <tr><td class="mono">Sheet</td><td>code (A-6), title, discipline, current_revision_id</td><td>Seeded from the approved set when the building permit is issued</td></tr>
+      <tr><td class="mono">SheetRevision</td><td>sheet, R-number, file (Drive id), signed, stamped, status</td><td>Status values: draft · pending · approved · released-unstamped · superseded</td></tr>
+      <tr><td class="mono">Package</td><td>trigger type, ClickUp ticket id, sheets[], route, state, owner, dates</td><td>The single object for permits, city comments and occurrences</td></tr>
+      <tr><td class="mono">SetVersion</td><td>V-number, snapshot of current SheetRevisions, change summary, published_by</td><td>What the field refers to ("we're on V8")</td></tr>
+      <tr><td class="mono">Acknowledgement</td><td>user, set version, channel (Slack, daily log, QR), timestamp</td><td>Drives escalation and the adoption metric</td></tr>
+      <tr><td class="mono">SheetLink</td><td>sheet A, sheet B, co-change rate, source</td><td>Seeded from the Slack matrix, then learns from new packages</td></tr>
+    </tbody>
+  </table></div>
+  <p><b>Scope v1: plans and permit documents only.</b> The Design Book and spec book link into Set Versions in v2. The Specbook is already versioned in LUIH OS, so this is a join, not a rebuild.</p>
+</section>
+
+<!-- P-2 -->
+<section class="sheet" id="p2">
+  <div class="sheet-head"><span class="sheet-no">P-2</span><h2>Integrations</h2></div>
+  <div class="tbl"><table>
+    <thead><tr><th>System</th><th>Direction</th><th>What happens</th><th>Confidence</th></tr></thead>
+    <tbody>
+      <tr><td><b>Google Drive</b></td><td>LUIH OS → Drive</td><td>Creates the house tree from the template. Writes package folders, replaces current sheets, moves superseded files, writes <code>manifest.json</code>.</td><td><span class="chip c-cheap">High</span> Drive API, already used by the Specbook app</td></tr>
+      <tr><td><b>Buildertrend</b></td><td>LUIH OS → BT (final versions only)</td><td>On Publish: uploads the current sheets and the merged "_CURRENT SET — V8" PDF, deletes or replaces the previous ones in folders 00–04, and ticks the schedule milestone.</td><td><span class="chip c-risk">Unverified</span> BT's public API is limited for document upload. Spike needed: API → RPA (Playwright/Browserbase) → manual upload with a checklist as fallback.</td></tr>
+      <tr><td><b>Slack</b></td><td>Two-way</td><td>Heads-up and Publish posts to the job channel and #permitting_status, using the current <i>Mensagens padrões</i> templates. An Acknowledge button writes back to LUIH OS. A daily digest goes out for pending acknowledgements.</td><td><span class="chip c-cheap">High</span> Bot already posts Specbook updates</td></tr>
+      <tr><td><b>ClickUp</b></td><td>Two-way</td><td>A Ticket Hub card opens a Package. Package state ↔ D&amp;P Phase (7.3 ready · 7.4 city review · 7.6 comment resolution · 7.7 approved-BP pending · 7.9 issued). Publish closes the ticket.</td><td><span class="chip c-cheap">High</span> Existing lists and fields</td></tr>
+      <tr><td><b>Email / printer</b></td><td>LUIH OS → printer</td><td>On Publish, the changed sheets plus a change cover sheet go to the office printer's email address for the PM to pick up.</td><td><span class="chip c-fast">Medium</span> Depends on the printer model</td></tr>
+      <tr><td><b>Permit tools</b></td><td>Internal</td><td>The Submission Checklist runs on upload. The Comment Agent runs before submission. City results are captured from the Document Map scrapers where they exist.</td><td><span class="chip c-fast">Medium</span> Tampa and WP are strongest; Orlando has no docs access</td></tr>
+    </tbody>
+  </table></div>
+  <div class="box blue">
+    <span class="label">Slack Publish post (draft)</span>
+    <p class="mono" style="font-size:13px;line-height:1.55">[ SET V8 PUBLISHED ] 2308 Mulbry Dr · 2026-10-08<br/>Why: Occurrence OCC-868k23qx8 · Drainage revision (city approved, stamped)<br/>Changed: C-1 R03 → R04 · L-1 R01 → R02<br/>Field impact: drainage swale moves 2 ft east; landscape grading updated<br/>Open in BT ▸ Current set · What changed (PDF) ▸<br/>[ ✅ Acknowledge, I'm on V8 ]   @Mike Lewellen @Jordan Powell</p>
+  </div>
+</section>
+
+<!-- P-3 -->
+<section class="sheet" id="p3">
+  <div class="sheet-head"><span class="sheet-no">P-3</span><h2>Getting the latest version to site</h2></div>
+  <p>The constraint is cultural: Mike's world runs on radio, paper and phone. That means paper stays, but paper has to be able to tell you when it's out of date. Options are ranked by leverage relative to effort.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>#</th><th>Idea</th><th>How it works</th><th>Pillar</th><th>Effort</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td><b>QR code on every printed sheet</b></td><td>Stamped in the title block at Publish. Scanning shows "✔ Current (V8)" or "✖ Superseded by R05 on Oct 8. Open current". It also goes on the blue bag cover and the job sign, where it opens the current set.</td><td><span class="chip c-better">Better</span></td><td>Low</td></tr>
+      <tr><td>2</td><td><b>Acknowledge plus escalation</b></td><td>Slack button or a BT daily log line: "Plans updated to V8". If nobody acknowledges within 24h, escalate to the construction manager. The acknowledgement rate becomes a KPI per superintendent.</td><td><span class="chip c-better">Better</span></td><td>Low</td></tr>
+      <tr><td>3</td><td><b>Automatic print with a change cover sheet</b></td><td>The changed sheets and a one-page "what changed" (clouded deltas, reason, trades affected) print in the office. Swap them in the blue bag and return the old ones. A PM without the paper is a visible gap.</td><td><span class="chip c-fast">Faster</span></td><td>Low</td></tr>
+      <tr><td>4</td><td><b>Pre-milestone gate</b></td><td>The BT schedule items for framing, MEP rough and trusses require an acknowledgement of the latest Set Version before they can start. This would have caught Mulbry's 9' trusses.</td><td><span class="chip c-cheap">Cheaper</span></td><td>Medium</td></tr>
+      <tr><td>5</td><td><b>Superseded watermark</b></td><td>Any file moved to 99. Superseded gets a red diagonal "SUPERSEDED — see V8" stamp, so forwarded PDFs are self-correcting.</td><td><span class="chip c-better">Better</span></td><td>Low</td></tr>
+      <tr><td>6</td><td><b>Site tablet showing the current set</b></td><td>A ruggedized tablet in the blue bag pinned to the BT current-set view. Only worth it once options 1–3 are adopted.</td><td><span class="chip c-fast">Faster</span></td><td>Medium</td></tr>
+    </tbody>
+  </table></div>
+  <p><b>Recommendation:</b> ship 1, 2 and 3 together in Phase 1. Each one alone is weak: QR without acknowledgement relies on curiosity, and acknowledgement without paper misses the person on site. Together they create a closed loop with an audit trail. Option 4 is the strongest control, but it needs construction leadership to agree to the gate.</p>
+</section>
+
+<!-- P-4 -->
+<section class="sheet" id="p4">
+  <div class="sheet-head"><span class="sheet-no">P-4</span><h2>Roadmap</h2></div>
+  <div class="phase">
+    <div class="phase-when"><b>Phase 0</b><span>Wk 1–2 · no code</span><span><span class="chip c-cheap">Cheaper</span> <span class="chip c-better">Better</span></span></div>
+    <div>
+      <ul>
+        <li>Approve the folder and naming standard (A-4). Migrate the <b>active houses only</b> (Mulbry, Stetson, Oberlin, Langholm and so on). Archive the rest as they are.</li>
+        <li>Centralize the <i>Mensagens padrões</i> templates (today in Ingrid's personal Drive). Add a Set Version line and an acknowledgement request.</li>
+        <li>Leadership rule: the plan set is authoritative. A layout change in the Design Book requires a package.</li>
+        <li>RACI: who opens packages, who publishes, who acknowledges. Name a backup for Ingrid and for Luiza.</li>
+        <li>Baseline metrics: "which version" questions per house, approval-to-field latency, incidents.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="phase">
+    <div class="phase-when"><b>Phase 1</b><span>Wk 3–6 · automation MVP</span><span><span class="chip c-fast">Faster</span></span></div>
+    <div>
+      <ul>
+        <li>A "Publish" form in Slack or LUIH OS backed by Make. It moves the Drive folders, posts the template, updates the ClickUp phase and sends the print job.</li>
+        <li>Slack Acknowledge button and 24h escalation.</li>
+        <li>QR "current set" page per house, read-only, generated from the Drive 01. Approved folder.</li>
+        <li>BT integration spike: API vs RPA. BT upload stays manual in this phase, with a checklist.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="phase">
+    <div class="phase-when"><b>Phase 2</b><span>Wk 7–12 · Plan Room</span><span><span class="chip c-better">Better</span> <span class="chip c-fast">Faster</span></span></div>
+    <div>
+      <ul>
+        <li>Plan Room module: sheet register, packages, Set Versions, audit trail and exception states.</li>
+        <li>Linked-sheet suggestions seeded from the Slack correlation matrix.</li>
+        <li>Automated push of the latest set to BT. Two-way sync of ClickUp D&amp;P phases.</li>
+        <li>QR stamped on each printed sheet. Superseded watermark.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="phase">
+    <div class="phase-when"><b>Phase 3</b><span>Q1 2027</span><span><span class="chip c-cheap">Cheaper</span></span></div>
+    <div>
+      <ul>
+        <li>Design Book and Specbook versions joined to Set Versions, with buyer re-sign alerts after closing (the Oberlin case).</li>
+        <li>Pre-milestone gates in the BT schedule.</li>
+        <li>Submission Checklist and Comment Agent embedded in the package flow.</li>
+      </ul>
+    </div>
+  </div>
+  <h3>Success metrics</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Metric</th><th>Baseline</th><th>Target (Phase 2 exit)</th></tr></thead>
+    <tbody>
+      <tr><td>Manual steps per status change</td><td>4–5 (estimate)</td><td>1 (Publish)</td></tr>
+      <tr><td>Approval → field notified</td><td>Hours to never (Oberlin)</td><td>&lt; 4 business hours</td></tr>
+      <tr><td>Set acknowledged by super/PM within 24h</td><td>Not measured</td><td>≥ 90%</td></tr>
+      <tr><td>"Which version / where is it" questions per house per month</td><td>~1 (estimated from 4 channels)</td><td>−75%</td></tr>
+      <tr><td>Incidents traced to an outdated document</td><td>10+ in 4 houses (2026)</td><td>0 on houses that use Plan Room</td></tr>
+      <tr><td>Houses on the folder standard</td><td>0</td><td>100% of active houses</td></tr>
+    </tbody>
+  </table></div>
+  <p class="src">Business case, still to be sized: the #tech review put rework at about $196K a year, and the Mulbry framing stop plus the Oberlin brick and CO slip are the visible part. Before Phase 2 I'd attribute rework dollars per incident with construction. Without that number this is a "Better" bet, not yet a "Cheaper" one.</p>
+</section>
+
+<!-- P-5 -->
+<section class="sheet" id="p5">
+  <div class="sheet-head"><span class="sheet-no">P-5</span><h2>Decisions needed and open questions</h2></div>
+  <div class="grid2">
+    <div class="box red">
+      <span class="label">Decisions (leadership)</span>
+      <ol>
+        <li>The plan set is authoritative over the Design Book. Yes or no?</li>
+        <li>Policy for releasing before the stamp: who may authorize it, and how long can it stay amber?</li>
+        <li>Pre-milestone acknowledgement gate on site (construction leadership has to commit).</li>
+        <li>Phase 1 on Make vs going straight to LUIH OS. I recommend Make first, to validate the loop in 4 weeks.</li>
+      </ol>
+    </div>
+    <div class="box">
+      <span class="label">Open questions (to validate)</span>
+      <ol>
+        <li>Can the BT API upload or replace documents, or do we need RPA?</li>
+        <li>What is the name of BT folder 03? It isn't confirmed.</li>
+        <li>"D0": a verbal convention or a planned standard? It doesn't exist in Drive.</li>
+        <li>Interview Maira and Vini (field end of the flow) and Rafa (process inputs). Senna flagged both.</li>
+        <li>Who owns occurrences when Ingrid is out? There's no backup today.</li>
+        <li>Should Orlando and Orange County keep per-city packaging? Luiza said they're submitted as received.</li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <span class="label">Confidence</span>
+  <p>Facts come from interviews, Slack (with channel and date), Drive and ClickUp. Counts and percentages marked "estimate" come from 4 job channels and should be validated on 10+ houses. The BT integration feasibility, the BT 03 folder name and the dollar impact are unverified.</p>
+</footer>
+</div>
