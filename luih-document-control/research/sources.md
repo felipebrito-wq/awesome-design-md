@@ -54,3 +54,21 @@
 | ID | Item |
 |---|---|
 | GH-OS | Invisto/pm-luih-os (cloned at /home/user/pm-luih-os). LUIH OS prototype; `os/` is Engineering's code when synced. Read-only for this research. |
+
+## Added by synthesis (2026-10-11), from the validator files
+| ID | Source | Found by |
+|---|---|---|
+| SL-NEP | #5103-neptune · C088T93SJES | validation-slack |
+| SL-WAT | #4312-w-watrous-ave · C0963UPMQAV | validation-slack |
+| SL-COR | #3909-w-corona-st · C0959UHPJKA | validation-slack |
+| SL-FAW | #121-fawsett · C08QTAVDD8T | validation-slack |
+| SL-CHA | #2417-chantilly-ave · C0959U8KJV7 | validation-slack |
+| SL-ROW | #1922-rowena-ave · C09TDBGDSAE | validation-slack |
+| SL-SHI | #1840-shiloh-ln · C0AGLDBCL94 | validation-slack |
+| SL-BRY | #2623-s-bryant-cir · C0855MMNPNY | validation-slack |
+| SL-TECH | #tech (id not returned) | validation-slack |
+| DR-TPL | House folder template: Home Building › `02. Library` › `01. STANDARD FOLDER` (id `1JXmF7jxsa5reNcb869r8f7_dfno3rfLQ`) | validation-drive-clickup-code |
+| DR-GPERM | "Guide \| Permitting" (owner gabriella.santaella@luih.com), doc id `1hJZN_74twBup-frVM5YuZ9YeH-XgR2WxCgbBYvJJSY0` | validation-drive-clickup-code |
+| GH-BTAPI | `Invisto/luih-buildertrend-api` @ `f3b7045` (internal BT middleware) | validation-drive-clickup-code |
+| GH-LOS | `Invisto/luih-os` @ `517e758` (Engineering's LUIH OS) | validation-drive-clickup-code |
+| W-BT1…W-BT6, W-PC1…W-PC4, W-BB1, W-AD1, W-AD2, W-ISO1…W-ISO3, W-AIA1, W-FL1, W-QR1, W-QR2 | Web sources; full links in `validation-redteam.md` § "Web sources" | validation-redteam |
