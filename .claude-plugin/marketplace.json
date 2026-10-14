@@ -1,0 +1,6 @@
+{
+  "name": "felipe-mods",
+  "description": "Felipe's Claude Code mods",
+  "owner": { "name": "felipebrito-wq" },
+  "plugins": [{ "name": "limit-bar", "source": "./limit-bar" }]
+}
