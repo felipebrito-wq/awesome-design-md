@@ -1,0 +1,1 @@
+{ "name": "limit-bar", "version": "0.1.0", "description": "Always-on bar above the prompt showing how much of your 5-hour and weekly usage limits you've consumed", "types": "./types/index.d.ts" }
