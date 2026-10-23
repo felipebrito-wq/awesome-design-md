@@ -23,6 +23,20 @@ Source: lawsofux.com. Tag each recommendation to a pillar: **Cheaper · Faster �
 
 Note on Miller: "7±2" is a heuristic. Modern research suggests ~4 chunks of working memory. Treat 7 as a ceiling, not a target.
 
+## Severity rubric
+
+Use the same scale for every finding so audits are comparable:
+
+- **Blocker**: stops or reverses the task (lost input, unreachable CTA, mis-tap destroys work).
+- **Friction**: the task completes but with extra effort, errors, or abandonment risk.
+- **Polish**: cosmetic or marginal, with no measurable effect on completion.
+
+Scorecard mapping: Fail = at least one Blocker, Weak = Friction only, Pass = Polish or nothing.
+
+## Static vs flow context
+
+Zeigarnik (saved state, resume) and Goal Gradient (real progress across steps) cannot be judged from a single static screen. If you only have a screen or mockup, mark them **"Needs flow context"** and list what to check (draft persistence, resume behavior, step count). Do not guess a status.
+
 ## Procedure
 
 1. **Scope**: identify the screen, flow, or spec under review and the user's primary goal on it.
@@ -39,10 +53,10 @@ UX LAWS AUDIT: <screen / flow>
 User goal: <one line>
 
 Scorecard
-| Law | Status (Pass / Weak / Fail / N/A) | Evidence |
+| Law | Status (Pass / Weak / Fail / N/A / Needs flow context) | Evidence |
 
 Top issues (ranked by impact)
-1. <issue> | Law: <x> | Pillar: <Cheaper/Faster/Better> | Fix: <specific change> | Impact: <metric>
+1. <issue> | Severity: <Blocker/Friction/Polish> | Law: <x> | Pillar: <Cheaper/Faster/Better> | Fix: <specific change> | Impact: <metric>
 
 Tensions between laws: <if any, and the call made>
 Hypotheses to validate: <metric / test>
